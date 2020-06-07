@@ -31,6 +31,18 @@ const initialState = {
         width: 1080,
         height: 20,
       },
+      {
+        x: 0,
+        y: 600,
+        width: 200,
+        height: 20,
+      },
+      {
+        x: 1080,
+        y: 600,
+        width: 200,
+        height: 20,
+      },
     ],
   ),
 };
