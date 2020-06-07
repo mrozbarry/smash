@@ -11,7 +11,7 @@
     "parcel-bundler": "^1.12.4"
   },
   "dependencies": {
-    "declarativas": "^0.0.1-beta.5",
+    "declarativas": "^0.0.1-beta.6",
     "hyperapp": "^2.0.4",
     "tailwindcss": "^1.4.6"
   }

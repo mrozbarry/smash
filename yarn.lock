@@ -1954,10 +1954,10 @@ decamelize@^1.2.0:
   resolved "https://registry.yarnpkg.com/decamelize/-/decamelize-1.2.0.tgz#f6534d15148269b20352e7bee26f501f9a191290"
   integrity sha1-9lNNFRSCabIDUue+4m9QH5oZEpA=
 
-declarativas@^0.0.1-beta.5:
-  version "0.0.1-beta.5"
-  resolved "https://registry.yarnpkg.com/declarativas/-/declarativas-0.0.1-beta.5.tgz#519532293533ce02a24ac5436930ed6bef7517db"
-  integrity sha512-gTP+E4R1KrpgWoyE4vrNmkwPwaZ7tCwvcVHYFOLoeJpt2s8R271Ycir89e7ftMpifnLEjjf0EC3J9IGHp+DKgQ==
+declarativas@^0.0.1-beta.6:
+  version "0.0.1-beta.6"
+  resolved "https://registry.yarnpkg.com/declarativas/-/declarativas-0.0.1-beta.6.tgz#4929661eb31bd0cb78cab0a907df3bd2aae14047"
+  integrity sha512-Bl0YJpCsBvm5johBAyT7ZtU2hbnRWlGg5G+squEAXYFhN3LKAY0+6B+hdQ3NIn/8uYz9o8XTw2QMseFOlAChZw==
 
 decode-uri-component@^0.2.0:
   version "0.2.0"
