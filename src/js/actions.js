@@ -1,13 +1,8 @@
 import * as effects from './effects';
+import * as physics from './physics';
 
 const omit = (key, object) => {
   const { [key]: discard, ...nextObject } = object;
-  console.log('omit', {
-    key,
-    object,
-    discard,
-    nextObject,
-  });
   return nextObject;
 };
 
@@ -26,19 +21,19 @@ export const PlayerAdd = (state, { id, color }) => ({
         jump: 0,
       },
       color,
-      x: state.canvas.width / 2,
-      y: 10,
-      vx: 0,
-      vy: 0,
-      mass: 1,
+      object: physics.dynamic.make(
+        physics.vec.make(
+          state.canvas.width / 2,
+          100,
+        ),
+      ),
     },
   },
 });
 
 export const PlayerRemove = (state, { id }) => ({
   ...state,
-  players: omit(id, state.players),
-});
+  players: omit(id, state.players), });
 
 export const PlayerInputChange = (state, { id, inputKey, value }) => ({
   ...state,
@@ -65,52 +60,52 @@ export const CanvasSetContext = (state, context) => ({
 export const Render = (state) => {
   const now = performance.now();
   const delta = state.game.lastFrameTime
-    ? now - state.game.lastFrameTime
+    ? (now - state.game.lastFrameTime) / 1000
     : 0;
 
-  const clampX = (v) => Math.min(
-    state.canvas.width,
-    Math.max(
-      0,
-      v,
-    ),
-  );
+  let players = Object.values(state.players);
+  const game = physics.integrate(delta, () => {
+    players = players.map(player => {
+      let object = physics.dynamic.step(
+        state.game,
+        player.inputs,
+        player.object,
+      );
 
-  const clampY = (v) => Math.min(
-    state.canvas.height,
-    Math.max(
-      0,
-      v,
-    ),
-  );
+      const geo = physics.world.detectClosestPlatform(
+        object.previous.position,
+        state.game,
+      );
+
+      const max = physics.vec.make(
+        1280,
+        geo ? geo.y : 720,
+      );
+
+      return {
+        ...player,
+        object: physics.dynamic.clamp(
+          physics.vec.zero,
+          max,
+          object,
+        ),
+      };
+    });
+  }, state.game);
+
+  players = players.reduce((nextPlayers, p) => ({
+    ...nextPlayers,
+    [p.id]: p,
+  }), {});
 
   return [
     {
       ...state,
       game: {
-        ...state.game,
+        ...game,
         lastFrameTime: now,
       },
-      players: Object.keys(state.players).reduce((players, id) => {
-        const p = state.players[id];
-        const vx = p.vx
-          + ((state.game.gravity.x) * delta)
-          + ((p.inputs.horizontal * 0.1) * delta);
-        const vy = p.vy
-          + ((state.game.gravity.y) * delta)
-          + ((Math.max(0, p.inputs.vertical) * -0.15) * delta);
-
-        return {
-          ...players,
-          [id]: {
-            ...p,
-            x: clampX(p.x + vx),
-            y: clampY(p.y + vy),
-            vx: vx / 1.5,
-            vy,
-          },
-        };
-      }, {}),
+      players,
     },
     effects.Declarativas({
       state,

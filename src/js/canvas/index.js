@@ -13,7 +13,7 @@ export const view = (state) => c(revertableState, {}, [
   c(
     revertableState,
     {}, 
-    state.level.geometry.map((geo) => c(
+    state.game.geometry.map((geo) => c(
       staticGeometry,
       geo,
     )),

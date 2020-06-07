@@ -2,6 +2,7 @@ import { app, h } from 'hyperapp';
 import * as actions from './actions';
 import * as effects from './effects';
 import * as subscriptions from './subscriptions';
+import * as physics from './physics';
 
 const ArrowKeyBinds = {
   'ArrowUp': 'up',
@@ -13,45 +14,35 @@ const ArrowKeyBinds = {
   'Space': 'jump',
 };
 
-const init = () => {
-  const state = {
-    canvas: {
-      width: 1280,
-      height: 720,
-      context: null,
-    },
-    players: {},
-    game: {
-      gravity: {
-        x: 0,
-        y: 0.01,
+const initialState = {
+  canvas: {
+    width: 1280,
+    height: 720,
+    context: null,
+  },
+  players: {},
+  game: physics.world.make(
+    physics.vec.make(0, 1.5),
+    1 / 60,
+    [
+      {
+        x: 100,
+        y: 700,
+        width: 1080,
+        height: 20,
       },
-      lastFrameTime: null,
-    },
-    level: {
-      geometry: [
-        {
-          x: 100,
-          y: 700,
-          width: 1080,
-          height: 20,
-        },
-
-      ],
-    },
-  };
-
-  return [
-    state,
-    effects.Declarativas({
-      state,
-      AfterRenderAction: actions.Render,
-    }),
-  ];
+    ],
+  ),
 };
 
 app({
-  init: init(),
+  init: [
+    initialState,
+    effects.Declarativas({
+      state: initialState,
+      AfterRenderAction: actions.Render,
+    }),
+  ],
 
   view: (state) => h('div', {}, [
     h('canvas', {
@@ -73,7 +64,6 @@ app({
     }),
 
     subscriptions.KeyboardPlayer({
-      canvasQuerySelector: '#canvas',
       id: 'p1',
       color: '#f0f',
       keybinds: ArrowKeyBinds,

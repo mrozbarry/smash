@@ -15,17 +15,16 @@ const size = {
  *
  */
 
-export const player = (props) => [
-  c('strokeStyle', { value: 'black' }),
-  c('fillStyle', { value: props.color }),
-  c('fillRect', {
+export const player = (props) => {
+  const rect = {
     ...size,
-    x: props.x - (size.width / 2),
-    y: props.y - size.height,
-  }),
-  c('strokeRect', {
-    ...size,
-    x: props.x - (size.width / 2),
-    y: props.y - size.height,
-  }),
-];
+    x: props.object.current.position.x - (size.width / 2),
+    y: props.object.current.position.y - size.height,
+  };
+  return [
+    c('strokeStyle', { value: 'black' }),
+    c('fillStyle', { value: props.color }),
+    c('fillRect', rect),
+    c('strokeRect', rect),
+  ];
+};
