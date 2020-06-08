@@ -47,6 +47,16 @@ export const game = (state) => h('div', {
         marginRight: '0.5rem',
       },
     }),
-    h('div', {}, player.id),
+    h('div', {
+      style: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+      },
+    }, [
+      player.id,
+      h('small', {}, `Died ${player.deaths} time${player.deaths === 1 ? '' : 's'}`),
+    ]),
   ]))),
 ]);

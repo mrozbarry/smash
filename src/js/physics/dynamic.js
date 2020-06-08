@@ -10,6 +10,20 @@ export const make = (position, size) => ({
   jumpSpeed: -9,
 });
 
+export const reset = (world, dynamicObject) => {
+  const geo = world.geometry[Math.floor(Math.random() * world.geometry.length)];
+  return {
+    ...dynamicObject,
+    isOnGround: false,
+    isJumping: false,
+    position: vec.make(
+      geo.x + (geo.width / 2),
+      100,
+    ),
+    speed: vec.zero,
+  };
+};
+
 export const applyInputs = (inputs, dynamicObject) => {
   const isJumping = dynamicObject.isOnGround && inputs.jump > 0;
 
@@ -26,12 +40,12 @@ export const applyInputs = (inputs, dynamicObject) => {
   };
 };
 
-export const step = (physics, ground, dynamicObject) => {
+export const step = (world, ground, dynamicObject) => {
   const speed = vec.add(
     dynamicObject.speed,
     vec.multiply(
-      physics.timestep,
-      physics.gravity,
+      world.timestep,
+      world.gravity,
     ),
   );
 
@@ -59,7 +73,7 @@ export const step = (physics, ground, dynamicObject) => {
     position,
     speed: vec.make(
       Math.max(-20, Math.min(20, speed.x * 0.8)),
-      speed.y,
+      Math.max(-20, Math.min(20, speed.y)),
     ),
   };
 };

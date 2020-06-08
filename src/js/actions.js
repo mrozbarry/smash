@@ -80,15 +80,16 @@ export const PlayerAdd = (state, { id, color }) => {
           kick: 0,
           jump: 0,
         },
+        deaths: 0,
         color,
-        object: physics.dynamic.make(
-          physics.vec.make(
-            x,
-            100,
-          ),
-          physics.vec.make(
-            40,
-            90,
+        object: physics.dynamic.reset(
+          state.game,
+          physics.dynamic.make(
+            physics.vec.zero,
+            physics.vec.make(
+              40,
+              90,
+            ),
           ),
         ),
       },
@@ -99,6 +100,18 @@ export const PlayerAdd = (state, { id, color }) => {
 export const PlayerRemove = (state, { id }) => ({
   ...state,
   players: omit(id, state.players),
+});
+
+export const PlayerKill = (state, { id }) => ({
+  ...state,
+  players: {
+    ...state.players,
+    [id]: {
+      ...state.players[id],
+      deaths: state.players[id].deaths + 1,
+      object: physics.dynamic.reset(state.game, state.players[id].object),
+    },
+  },
 });
 
 export const PlayerInputChange = (state, {
@@ -166,10 +179,22 @@ export const Render = (state) => {
     });
   }, state.game));
 
+  const idsToKill = players
+    .filter(p => (
+      p.object.position.y > (state.canvas.height + (p.object.size.y * 2)))
+      && p.object.speed.y === 20
+    )
+    .map(p => p.id);
+
   players = players.reduce((nextPlayers, p) => ({
     ...nextPlayers,
-    [p.id]: p,
+    [p.id]: {
+      ...p,
+      deaths: idsToKill.includes(p.id) ? p.deaths + 1 : p.deaths,
+      object: idsToKill.includes(p.id) ? physics.dynamic.reset(state.game, p.object) : p.object,
+    },
   }), {});
+
 
   return [
     {
