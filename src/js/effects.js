@@ -18,3 +18,29 @@ const DeclarativasFX = (dispatch, {
   });
 };
 export const Declarativas = props => [DeclarativasFX, props];
+
+const LoadSpriteSheetFx = (dispatch, {
+  character,
+  type,
+  uri,
+  frames,
+  rate,
+  size,
+  OnLoad,
+  OnReady,
+}) => {
+  const image = new Image();
+
+  image.onload = () => {
+    dispatch(OnReady, { character, type, image });
+  };
+
+  image.onerror = (error) => {
+    console.error('Unable to load image', { character, type, uri }, error);
+  };
+
+  image.src = uri;
+
+  dispatch(OnLoad, { character, type, frames, rate, size });
+};
+export const LoadSpriteSheet = props => [LoadSpriteSheetFx, props];

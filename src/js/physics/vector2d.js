@@ -15,6 +15,11 @@ export const multiply = (value, vec) => make(
   vec.y * value,
 );
 
+export const multiplyAxis = (mulVec, vec) => make(
+  vec.x * mulVec.x,
+  vec.y * mulVec.y,
+);
+
 export const add = (other, vec) => make(
   vec.x + other.x,
   vec.y + other.y,

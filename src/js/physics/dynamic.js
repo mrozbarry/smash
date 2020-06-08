@@ -14,42 +14,44 @@ export const make = (position, size) => ({
     isJumping: false,
   },
   size,
-  walkSpeed: 70,
-  jumpSpeed: 2000,
+  walkSpeed: 80,
+  jumpSpeed: -50,
 });
 
-export const step = (physics, inputs, dynamicObject) => {
-  const isJumping = !dynamicObject.current.isJumping
-    && dynamicObject.current.isOnGround
-    && inputs.vertical > 0;
+export const step = (physics, inputs, ground, dynamicObject) => {
+  let position = vec.add(
+    vec.multiply(physics.timestep, dynamicObject.current.speed),
+    dynamicObject.current.position,
+  );
+  position.y = ground
+    ? Math.min(ground.y, position.y)
+    : position.y;
 
-  const jump = isJumping
-    ? dynamicObject.jumpSpeed
-    : 0;
+  const isOnGround = ground
+    && position.y === ground.y
+    && dynamicObject.current.speed.y >= 0;
+
+  const isJumping = !dynamicObject.current.isJumping
+    && isOnGround
+    && inputs.jump > 0;
 
   return {
     ...dynamicObject,
-    previous: dynamicObject.current,
+    previous: { ...dynamicObject.current },
     current: {
-      ...dynamicObject.current,
+      isOnGround,
       isJumping,
-      isOnGround: !isJumping,
-      position: vec.add(
-        dynamicObject.current.speed,
-        dynamicObject.current.position,
-      ),
-      speed: vec.multiply(
-        0.9,
+      position,
+      speed: vec.add(
+        vec.make(
+          dynamicObject.current.speed.x * 0.9,
+          dynamicObject.current.speed.y,
+        ),
         vec.add(
-          vec.add(
-            dynamicObject.current.isOnGround
-              ? vec.zero
-              : physics.gravity,
-            dynamicObject.current.speed,
-          ),
+          physics.gravity,
           vec.make(
-            dynamicObject.walkSpeed * inputs.horizontal * physics.timestep,
-            -jump * physics.timestep,
+            dynamicObject.walkSpeed * inputs.horizontal * (isOnGround ? 1 : 0.8),
+            dynamicObject.jumpSpeed * inputs.jump * (isJumping ? 1 : 0.1),
           ),
         ),
       ),
@@ -59,12 +61,16 @@ export const step = (physics, inputs, dynamicObject) => {
 
 export const clamp = (min, max, dynamicObject) => {
   const position = vec.clamp(min, max, dynamicObject.current.position);
+  const isOnGround = position.y === max.y
+    && !dynamicObject.previous.isOnGround
+    && dynamicObject.current.speed.y > 0;
+
   return {
     ...dynamicObject,
     current: {
       ...dynamicObject.current,
       position,
-      isOnGround: position.y === max.y,
+      isOnGround,
     },
   };
 };

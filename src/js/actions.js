@@ -2,52 +2,130 @@ import * as effects from './effects';
 import * as physics from './physics';
 
 const omit = (key, object) => {
-  const { [key]: discard, ...nextObject } = object;
+  const { [key]: _discard, ...nextObject } = object;
   return nextObject;
 };
 
 
-export const PlayerAdd = (state, { id, color }) => ({
+export const SpriteSheetLoad = (state, {
+  character,
+  type,
+  frames,
+  rate,
+  size,
+}) => ({
   ...state,
-  players: {
-    ...state.players,
-    [id]: {
-      id,
-      inputs: {
-        horizontal: 0,
-        vertical: 0,
-        punch: 0,
-        kick: 0,
-        jump: 0,
+  spriteSheets: {
+    ...state.spriteSheets,
+    [character]: {
+      ...state.spriteSheets[character],
+      [type]: {
+        image: null,
+        frames,
+        rate,
+        size,
+        ready: false,
       },
-      color,
-      object: physics.dynamic.make(
-        physics.vec.make(
-          state.canvas.width / 2,
-          100,
-        ),
-      ),
     },
   },
 });
+
+export const SpriteSheetReady = (state, {
+  character,
+  type,
+  image,
+}) => ({
+  ...state,
+  spriteSheets: {
+    ...state.spriteSheets,
+    [character]: {
+      ...state.spriteSheets[character],
+      [type]: {
+        ...state.spriteSheets[character][type],
+        image,
+        ready: true,
+      },
+    },
+  },
+});
+
+
+export const StartGame = (state) => [
+  {
+    ...state,
+    showGame: true,
+  },
+  effects.Declarativas({
+    state,
+    AfterRenderAction: Render,
+  }),
+];
+
+
+export const PlayerAdd = (state, { id, color }) => {
+  const x = (state.canvas.width / 2) + ((Math.random() * 300) - 150);
+
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      [id]: {
+        id,
+        isFacingRight: x < state.canvas.width / 2,
+        animationType: 'idle',
+        inputs: {
+          horizontal: 0,
+          vertical: 0,
+          punch: 0,
+          kick: 0,
+          jump: 0,
+        },
+        color,
+        object: physics.dynamic.make(
+          physics.vec.make(
+            x,
+            100,
+          ),
+          physics.vec.make(
+            40,
+            90,
+          ),
+        ),
+      },
+    },
+  };
+};
 
 export const PlayerRemove = (state, { id }) => ({
   ...state,
-  players: omit(id, state.players), });
+  players: omit(id, state.players),
+});
 
-export const PlayerInputChange = (state, { id, inputKey, value }) => ({
-  ...state,
-  players: {
-    ...state.players,
-    [id]: {
-      ...state.players[id],
-      inputs: {
-        ...state.players[id].inputs,
-        [inputKey]: value,
+export const PlayerInputChange = (state, {
+  id,
+  inputKey,
+  value,
+}) => {
+  return {
+    ...state,
+    players: {
+      ...state.players,
+      [id]: {
+        ...state.players[id],
+        isFacingRight: inputKey === 'horizontal' && value !== 0
+          ? value > 0
+          : state.players[id].isFacingRight,
+        animationType: inputKey === 'horizontal'
+          ? (value !== 0 ? 'run' : 'idle')
+          : state.players[id].animationType,
+        inputs: {
+          ...state.players[id].inputs,
+          [inputKey]: value,
+        },
       },
     },
-  },
-});
+  };
+};
 
 export const CanvasSetContext = (state, context) => ({
   ...state,
@@ -64,34 +142,25 @@ export const Render = (state) => {
     : 0;
 
   let players = Object.values(state.players);
-  const game = physics.integrate(delta, () => {
+  const game = physics.world.applyDelta(delta, physics.integrate(delta, () => {
     players = players.map(player => {
-      let object = physics.dynamic.step(
+      const ground = physics.world.detectClosestPlatform(
+        player.object.current.position,
+        { x: 48, y: 96 },
         state.game,
-        player.inputs,
-        player.object,
-      );
-
-      const geo = physics.world.detectClosestPlatform(
-        object.previous.position,
-        state.game,
-      );
-
-      const max = physics.vec.make(
-        1280,
-        geo ? geo.y : 720,
       );
 
       return {
         ...player,
-        object: physics.dynamic.clamp(
-          physics.vec.zero,
-          max,
-          object,
+        object: physics.dynamic.step(
+          state.game,
+          player.inputs,
+          ground,
+          player.object,
         ),
       };
     });
-  }, state.game);
+  }, state.game));
 
   players = players.reduce((nextPlayers, p) => ({
     ...nextPlayers,

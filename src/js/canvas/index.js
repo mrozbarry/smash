@@ -21,6 +21,10 @@ export const view = (state) => c(revertableState, {}, [
 
   Object.values(state.players).map((playerData) => c(
     player,
-    playerData,
+    {
+      ...playerData,
+      spriteSheets: state.spriteSheets,
+      game: state.game,
+    },
   )),
 ]);
