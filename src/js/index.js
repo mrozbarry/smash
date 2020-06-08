@@ -35,7 +35,7 @@ const initialState = {
   spriteSheets: {},
   players: {},
   game: physics.world.make(
-    physics.vec.make(0, 10),
+    physics.vec.make(0, 200),
     1 / 60,
     [
       {
@@ -58,6 +58,12 @@ const initialState = {
       },
       {
         x: 1080,
+        y: 600,
+        width: 200,
+        height: 20,
+      },
+      {
+        x: 540,
         y: 600,
         width: 200,
         height: 20,

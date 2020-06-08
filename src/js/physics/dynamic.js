@@ -1,27 +1,51 @@
 import * as vec from './vector2d';
 
 export const make = (position, size) => ({
-  previous: {
-    position,
-    speed: vec.zero,
-    isOnGround: false,
-    isJumping: false,
-  },
-  current: {
-    position,
-    speed: vec.zero,
-    isOnGround: false,
-    isJumping: false,
-  },
+  position,
+  speed: vec.zero,
+  force: vec.zero,
+  isOnGround: false,
+  isJumping: false,
   size,
-  walkSpeed: 80,
-  jumpSpeed: -50,
+  walkSpeed: 100,
+  jumpSpeed: -10000,
 });
 
-export const step = (physics, inputs, ground, dynamicObject) => {
+export const applyInputs = (inputs, dynamicObject) => {
+  const isJumping = dynamicObject.isOnGround
+    && !dynamicObject.isJumping
+    && inputs.jump > 0;
+
+  return {
+    ...dynamicObject,
+    isJumping,
+    isOnGround: !isJumping,
+    force: vec.add(
+      vec.add(
+        vec.make(
+          dynamicObject.walkSpeed * inputs.horizontal,
+          0,
+        ),
+        isJumping
+          ? vec.make(0, dynamicObject.jumpSpeed * inputs.jump)
+          : vec.zero,
+      ),
+      vec.make(
+        dynamicObject.walkSpeed * inputs.horizontal,
+      ),
+    ),
+  };
+};
+
+export const step = (physics, ground, dynamicObject) => {
+  const speed = vec.add(
+    vec.add(dynamicObject.speed, physics.gravity),
+    dynamicObject.force,
+  );
+
   let position = vec.add(
-    vec.multiply(physics.timestep, dynamicObject.current.speed),
-    dynamicObject.current.position,
+    vec.multiply(physics.timestep, speed),
+    dynamicObject.position,
   );
   position.y = ground
     ? Math.min(ground.y, position.y)
@@ -29,48 +53,20 @@ export const step = (physics, inputs, ground, dynamicObject) => {
 
   const isOnGround = ground
     && position.y === ground.y
-    && dynamicObject.current.speed.y >= 0;
-
-  const isJumping = !dynamicObject.current.isJumping
-    && isOnGround
-    && inputs.jump > 0;
+    && dynamicObject.speed.y >= 0;
 
   return {
     ...dynamicObject,
-    previous: { ...dynamicObject.current },
-    current: {
-      isOnGround,
-      isJumping,
-      position,
-      speed: vec.add(
-        vec.make(
-          dynamicObject.current.speed.x * 0.9,
-          dynamicObject.current.speed.y,
-        ),
-        vec.add(
-          physics.gravity,
-          vec.make(
-            dynamicObject.walkSpeed * inputs.horizontal * (isOnGround ? 1 : 0.8),
-            dynamicObject.jumpSpeed * inputs.jump * (isJumping ? 1 : 0.1),
-          ),
-        ),
-      ),
-    },
+    isOnGround,
+    position,
+    speed: vec.make(
+      dynamicObject.speed.x * 0.9,
+      dynamicObject.speed.y,
+    ),
   };
 };
 
-export const clamp = (min, max, dynamicObject) => {
-  const position = vec.clamp(min, max, dynamicObject.current.position);
-  const isOnGround = position.y === max.y
-    && !dynamicObject.previous.isOnGround
-    && dynamicObject.current.speed.y > 0;
-
-  return {
-    ...dynamicObject,
-    current: {
-      ...dynamicObject.current,
-      position,
-      isOnGround,
-    },
-  };
-};
+export const resetForce = (dynamicObject) => ({
+  ...dynamicObject,
+  force: vec.multiply(0.5, dynamicObject.force),
+});

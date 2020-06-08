@@ -8,7 +8,7 @@ export const player = (props) => {
   const rect = {
     x: 0,
     y: 0,
-    width: -props.object.size.x,
+    width: props.object.size.x,
     height: props.object.size.y,
   };
 
@@ -23,11 +23,11 @@ export const player = (props) => {
 
   return c(revertableState, {}, [
     c('translate', {
-      x: props.object.current.position.x - (props.object.size.x / 2),
-      y: props.object.current.position.y - props.object.size.y,
+      x: props.object.position.x - (props.object.size.x / 2),
+      y: props.object.position.y - props.object.size.y,
     }),
     c('fillStyle', { value: 'black' }),
-    c('fillText', { x: 0, y: 0, text: `J${props.object.current.isJumping ? 1 : 0} G${props.object.current.isOnGround ? 1 : 0}` }),
+    c('fillText', { x: 0, y: 0, text: `J${props.object.isJumping ? 1 : 0} G${props.object.isOnGround ? 1 : 0}` }),
     c('strokeStyle', { value: props.color }),
     c('strokeRect', rect),
     c(mirror, { horizontal: !props.isFacingRight }, [

@@ -141,11 +141,16 @@ export const Render = (state) => {
     ? (now - state.game.lastFrameTime) / 1000
     : 0;
 
-  let players = Object.values(state.players);
+  let players = Object.values(state.players)
+    .map((player) => ({
+      ...player,
+      object: physics.dynamic.applyInputs(player.inputs, player.object),
+    }));
+
   const game = physics.world.applyDelta(delta, physics.integrate(delta, () => {
     players = players.map(player => {
       const ground = physics.world.detectClosestPlatform(
-        player.object.current.position,
+        player.object.position,
         { x: 48, y: 96 },
         state.game,
       );
@@ -154,7 +159,6 @@ export const Render = (state) => {
         ...player,
         object: physics.dynamic.step(
           state.game,
-          player.inputs,
           ground,
           player.object,
         ),
@@ -164,7 +168,10 @@ export const Render = (state) => {
 
   players = players.reduce((nextPlayers, p) => ({
     ...nextPlayers,
-    [p.id]: p,
+    [p.id]: {
+      ...p,
+      object: physics.dynamic.resetForce(p.object),
+    },
   }), {});
 
   return [
