@@ -3,70 +3,63 @@ import * as vec from './vector2d';
 export const make = (position, size) => ({
   position,
   speed: vec.zero,
-  force: vec.zero,
   isOnGround: false,
   isJumping: false,
   size,
-  walkSpeed: 100,
-  jumpSpeed: -10000,
+  walkSpeed: 2,
+  jumpSpeed: -9,
 });
 
 export const applyInputs = (inputs, dynamicObject) => {
-  const isJumping = dynamicObject.isOnGround
-    && !dynamicObject.isJumping
-    && inputs.jump > 0;
+  const isJumping = dynamicObject.isOnGround && inputs.jump > 0;
 
   return {
     ...dynamicObject,
     isJumping,
-    isOnGround: !isJumping,
-    force: vec.add(
-      vec.add(
-        vec.make(
-          dynamicObject.walkSpeed * inputs.horizontal,
-          0,
-        ),
-        isJumping
-          ? vec.make(0, dynamicObject.jumpSpeed * inputs.jump)
-          : vec.zero,
-      ),
+    speed: vec.add(
       vec.make(
         dynamicObject.walkSpeed * inputs.horizontal,
+        isJumping && !dynamicObject.isJumping ? dynamicObject.jumpSpeed : 0,
       ),
+      dynamicObject.speed,
     ),
   };
 };
 
 export const step = (physics, ground, dynamicObject) => {
   const speed = vec.add(
-    vec.add(dynamicObject.speed, physics.gravity),
-    dynamicObject.force,
+    dynamicObject.speed,
+    vec.multiply(
+      physics.timestep,
+      physics.gravity,
+    ),
   );
 
+  const isOnGround = ground
+    && ground.y === dynamicObject.position.y
+    && speed.y >= 0;
+
+  if (isOnGround && speed.y > 0) {
+    speed.y = 0;
+  }
+
   let position = vec.add(
-    vec.multiply(physics.timestep, speed),
+    speed,
     dynamicObject.position,
   );
+
   position.y = ground
     ? Math.min(ground.y, position.y)
     : position.y;
 
-  const isOnGround = ground
-    && position.y === ground.y
-    && dynamicObject.speed.y >= 0;
-
   return {
     ...dynamicObject,
     isOnGround,
+    isJumping: isOnGround ? false : dynamicObject.isJumping,
     position,
     speed: vec.make(
-      dynamicObject.speed.x * 0.9,
-      dynamicObject.speed.y,
+      Math.max(-20, Math.min(20, speed.x * 0.8)),
+      speed.y,
     ),
   };
 };
-
-export const resetForce = (dynamicObject) => ({
-  ...dynamicObject,
-  force: vec.multiply(0.5, dynamicObject.force),
-});

@@ -27,6 +27,7 @@ export const player = (props) => {
       y: props.object.position.y - props.object.size.y,
     }),
     c('fillStyle', { value: 'black' }),
+    c('fillText', { x: 0, y: -15, text: `S<${props.object.speed.x.toFixed(2)},${props.object.speed.y.toFixed(2)}>` }),
     c('fillText', { x: 0, y: 0, text: `J${props.object.isJumping ? 1 : 0} G${props.object.isOnGround ? 1 : 0}` }),
     c('strokeStyle', { value: props.color }),
     c('strokeRect', rect),

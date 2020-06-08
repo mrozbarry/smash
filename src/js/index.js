@@ -35,7 +35,7 @@ const initialState = {
   spriteSheets: {},
   players: {},
   game: physics.world.make(
-    physics.vec.make(0, 200),
+    physics.vec.make(0, 15),
     1 / 60,
     [
       {
@@ -91,6 +91,24 @@ app({
         frames: 6,
         size: 48,
         uri: assetWoodCutter.Woodcutter_run,
+        OnLoad: actions.SpriteSheetLoad,
+        OnReady: actions.SpriteSheetReady,
+      }),
+      effects.LoadSpriteSheet({
+        character: 'woodcutter',
+        type: 'attack1',
+        frames: 6,
+        size: 48,
+        uri: assetWoodCutter.Woodcutter_attack1,
+        OnLoad: actions.SpriteSheetLoad,
+        OnReady: actions.SpriteSheetReady,
+      }),
+      effects.LoadSpriteSheet({
+        character: 'woodcutter',
+        type: 'attack2',
+        frames: 6,
+        size: 48,
+        uri: assetWoodCutter.Woodcutter_attack2,
         OnLoad: actions.SpriteSheetLoad,
         OnReady: actions.SpriteSheetReady,
       }),

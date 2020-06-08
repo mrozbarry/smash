@@ -151,7 +151,7 @@ export const Render = (state) => {
     players = players.map(player => {
       const ground = physics.world.detectClosestPlatform(
         player.object.position,
-        { x: 48, y: 96 },
+        player.object.size,
         state.game,
       );
 
@@ -168,10 +168,7 @@ export const Render = (state) => {
 
   players = players.reduce((nextPlayers, p) => ({
     ...nextPlayers,
-    [p.id]: {
-      ...p,
-      object: physics.dynamic.resetForce(p.object),
-    },
+    [p.id]: p,
   }), {});
 
   return [
