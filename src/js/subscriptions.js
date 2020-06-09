@@ -47,6 +47,14 @@ const KeyboardPlayerSub = (dispatch, {
 
   const keyHandler = (defaultValue) => (event) => {
     const keybind = keybinds[event.code];
+    if (keybind) {
+      event.preventDefault();
+    }
+
+    if (event.repeat) {
+      return;
+    }
+
     let inputKey = keybind;
     let value = defaultValue;
 
@@ -54,14 +62,14 @@ const KeyboardPlayerSub = (dispatch, {
       state = update(keybind, defaultValue);
       inputKey = state[keybind].key;
       switch (keybind) {
-        case 'up':
-        case 'down':
-          value = state.up.value - state.down.value;
-          break;
-        case 'left':
-        case 'right':
-          value = state.right.value - state.left.value;
-          break;
+      case 'up':
+      case 'down':
+        value = state.up.value - state.down.value;
+        break;
+      case 'left':
+      case 'right':
+        value = state.right.value - state.left.value;
+        break;
       }
     }
 

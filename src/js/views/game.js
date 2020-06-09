@@ -35,6 +35,7 @@ export const game = (state) => h('div', {
       padding: '1rem',
       marginRight: '0.5rem',
       border: '1px black solid',
+      width: 'calc(1280px / 4)',
     },
   }, [
     h('div', {
@@ -51,8 +52,8 @@ export const game = (state) => h('div', {
       style: {
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
       },
     }, [
       player.id,

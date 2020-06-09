@@ -23,8 +23,6 @@ const LoadSpriteSheetFx = (dispatch, {
   character,
   type,
   uri,
-  frames,
-  rate,
   size,
   OnLoad,
   OnReady,
@@ -32,7 +30,12 @@ const LoadSpriteSheetFx = (dispatch, {
   const image = new Image();
 
   image.onload = () => {
-    dispatch(OnReady, { character, type, image });
+    dispatch(OnReady, {
+      character,
+      type,
+      image,
+      frames: image.width / 48,
+    });
   };
 
   image.onerror = (error) => {
@@ -41,6 +44,10 @@ const LoadSpriteSheetFx = (dispatch, {
 
   image.src = uri;
 
-  dispatch(OnLoad, { character, type, frames, rate, size });
+  dispatch(OnLoad, {
+    character,
+    type,
+    size,
+  });
 };
 export const LoadSpriteSheet = props => [LoadSpriteSheetFx, props];

@@ -1,5 +1,8 @@
 import * as effects from './effects';
 import * as physics from './physics';
+import * as animation from './animation';
+
+import * as assetWoodCutter from '../sprites/craftpix-891178-free-3-character-sprite-sheets-pixel-art/1 Woodcutter/*.png';
 
 const omit = (key, object) => {
   const { [key]: _discard, ...nextObject } = object;
@@ -10,8 +13,6 @@ const omit = (key, object) => {
 export const SpriteSheetLoad = (state, {
   character,
   type,
-  frames,
-  rate,
   size,
 }) => ({
   ...state,
@@ -20,9 +21,7 @@ export const SpriteSheetLoad = (state, {
     [character]: {
       ...state.spriteSheets[character],
       [type]: {
-        image: null,
-        frames,
-        rate,
+        image: new Image(),
         size,
         ready: false,
       },
@@ -34,6 +33,7 @@ export const SpriteSheetReady = (state, {
   character,
   type,
   image,
+  frames,
 }) => ({
   ...state,
   spriteSheets: {
@@ -42,6 +42,7 @@ export const SpriteSheetReady = (state, {
       ...state.spriteSheets[character],
       [type]: {
         ...state.spriteSheets[character][type],
+        frames,
         image,
         ready: true,
       },
@@ -65,14 +66,19 @@ export const StartGame = (state) => [
 export const PlayerAdd = (state, { id, color }) => {
   const x = (state.canvas.width / 2) + ((Math.random() * 300) - 150);
 
+  const character = 'woodcutter';
+  const parent = state.spriteSheets[character];
+
   return {
     ...state,
     players: {
       ...state.players,
       [id]: {
         id,
+        character,
         isFacingRight: x < state.canvas.width / 2,
         animationType: 'idle',
+        animation: animation.makeIdle(parent.idle),
         inputs: {
           horizontal: 0,
           vertical: 0,
@@ -80,6 +86,7 @@ export const PlayerAdd = (state, { id, color }) => {
           kick: 0,
           jump: 0,
         },
+        targets: [],
         deaths: 0,
         color,
         object: physics.dynamic.reset(
@@ -119,6 +126,9 @@ export const PlayerInputChange = (state, {
   inputKey,
   value,
 }) => {
+  const player = state.players[id];
+  const parent = state.spriteSheets[player.character];
+
   return {
     ...state,
     players: {
@@ -127,10 +137,13 @@ export const PlayerInputChange = (state, {
         ...state.players[id],
         isFacingRight: inputKey === 'horizontal' && value !== 0
           ? value > 0
-          : state.players[id].isFacingRight,
+          : player.isFacingRight,
         animationType: inputKey === 'horizontal'
           ? (value !== 0 ? 'run' : 'idle')
           : state.players[id].animationType,
+        animation: inputKey === 'horizontal'
+          ? (value !== 0 ? animation.makeRun(parent.run) : animation.makeIdle(parent.idle))
+          : player.animation,
         inputs: {
           ...state.players[id].inputs,
           [inputKey]: value,
@@ -181,15 +194,16 @@ export const Render = (state) => {
 
   const idsToKill = players
     .filter(p => (
-      p.object.position.y > (state.canvas.height + (p.object.size.y * 2)))
+      p.object.position.y > (state.canvas.height + (p.object.size.y * 2))
       && p.object.speed.y === 20
-    )
+    ))
     .map(p => p.id);
 
   players = players.reduce((nextPlayers, p) => ({
     ...nextPlayers,
     [p.id]: {
       ...p,
+      animation: animation.step(delta, p, p.animation),
       deaths: idsToKill.includes(p.id) ? p.deaths + 1 : p.deaths,
       object: idsToKill.includes(p.id) ? physics.dynamic.reset(state.game, p.object) : p.object,
     },

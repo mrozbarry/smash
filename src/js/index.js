@@ -13,8 +13,8 @@ const ArrowKeyBinds = {
   'ArrowUp': 'jump',
   'ArrowLeft': 'left',
   'ArrowRight': 'right',
-  'KeyZ': 'punch',
-  'KeyX': 'kick',
+  'Slash': 'punch',
+  'Period': 'kick',
 };
 
 const WasdKeyBinds = {
@@ -51,13 +51,13 @@ const initialState = {
         height: 20,
       },
       {
-        x: 0,
+        x: 150,
         y: 550,
         width: 200,
         height: 20,
       },
       {
-        x: 1080,
+        x: 930,
         y: 550,
         width: 200,
         height: 20,
@@ -79,7 +79,6 @@ app({
       effects.LoadSpriteSheet({
         character: 'woodcutter',
         type: 'idle',
-        frames: 4,
         size: 48,
         uri: assetWoodCutter.Woodcutter_idle,
         OnLoad: actions.SpriteSheetLoad,
@@ -88,7 +87,6 @@ app({
       effects.LoadSpriteSheet({
         character: 'woodcutter',
         type: 'run',
-        frames: 6,
         size: 48,
         uri: assetWoodCutter.Woodcutter_run,
         OnLoad: actions.SpriteSheetLoad,
@@ -97,7 +95,6 @@ app({
       effects.LoadSpriteSheet({
         character: 'woodcutter',
         type: 'attack1',
-        frames: 6,
         size: 48,
         uri: assetWoodCutter.Woodcutter_attack1,
         OnLoad: actions.SpriteSheetLoad,
@@ -106,7 +103,6 @@ app({
       effects.LoadSpriteSheet({
         character: 'woodcutter',
         type: 'attack2',
-        frames: 6,
         size: 48,
         uri: assetWoodCutter.Woodcutter_attack2,
         OnLoad: actions.SpriteSheetLoad,

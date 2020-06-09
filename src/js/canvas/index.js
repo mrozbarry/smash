@@ -10,6 +10,13 @@ export const view = (state) => c(revertableState, {}, [
     width: state.canvas.width,
     height: state.canvas.height,
   }),
+  c('fillStyle', { value: '#4eacd9' }),
+  c('fillRect', {
+    x: 0,
+    y: 0,
+    width: state.canvas.width,
+    height: state.canvas.height,
+  }),
   c(
     revertableState,
     {}, 

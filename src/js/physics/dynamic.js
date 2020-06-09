@@ -3,11 +3,16 @@ import * as vec from './vector2d';
 export const make = (position, size) => ({
   position,
   speed: vec.zero,
+  force: vec.zero,
   isOnGround: false,
   isJumping: false,
   size,
-  walkSpeed: 2,
+  walkSpeed: 0.8,
   jumpSpeed: -9,
+  punch: vec.make(
+    1,
+    -5,
+  ),
 });
 
 export const reset = (world, dynamicObject) => {
@@ -62,18 +67,28 @@ export const step = (world, ground, dynamicObject) => {
     dynamicObject.position,
   );
 
+  position = vec.add(
+    dynamicObject.force,
+    position,
+  );
+
   position.y = ground
     ? Math.min(ground.y, position.y)
     : position.y;
 
+  let speedX = speed.x * 0.9;
+  if (Math.abs(speedX) < 0.01) {
+    speedX = 0;
+  }
   return {
     ...dynamicObject,
     isOnGround,
     isJumping: isOnGround ? false : dynamicObject.isJumping,
     position,
     speed: vec.make(
-      Math.max(-20, Math.min(20, speed.x * 0.8)),
+      Math.max(-20, Math.min(20, speedX)),
       Math.max(-20, Math.min(20, speed.y)),
     ),
+    force: vec.zero,
   };
 };
