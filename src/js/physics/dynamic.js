@@ -10,8 +10,8 @@ export const make = (position, size) => ({
   walkSpeed: 0.8,
   jumpSpeed: -9,
   punch: vec.make(
-    1,
-    -5,
+    5,
+    -4,
   ),
 });
 
@@ -80,6 +80,12 @@ export const step = (world, ground, dynamicObject) => {
   if (Math.abs(speedX) < 0.01) {
     speedX = 0;
   }
+
+  let force = vec.multiply(0.8, dynamicObject.force);
+  force.x = Math.abs(force.x) < 0.01 ? 0 : force.x;
+  force.y = Math.abs(force.y) < 0.01 ? 0 : force.y;
+
+
   return {
     ...dynamicObject,
     isOnGround,
@@ -89,6 +95,11 @@ export const step = (world, ground, dynamicObject) => {
       Math.max(-20, Math.min(20, speedX)),
       Math.max(-20, Math.min(20, speed.y)),
     ),
-    force: vec.zero,
+    force,
   };
 };
+
+export const applyForce = (force, dynamicObject) => ({
+  ...dynamicObject,
+  force,
+});

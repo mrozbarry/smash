@@ -51,3 +51,14 @@ const LoadSpriteSheetFx = (dispatch, {
   });
 };
 export const LoadSpriteSheet = props => [LoadSpriteSheetFx, props];
+
+const PunchFX = (dispatch, {
+  sourceId,
+  targetIds,
+  OnPunch,
+}) => {
+  for(const id of targetIds) {
+    dispatch(OnPunch, { id, sourceId }); 
+  }
+};
+export const Punch = props => [PunchFX, props];

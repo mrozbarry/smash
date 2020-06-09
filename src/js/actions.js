@@ -129,28 +129,60 @@ export const PlayerInputChange = (state, {
   const player = state.players[id];
   const parent = state.spriteSheets[player.character];
 
-  return {
-    ...state,
-    players: {
-      ...state.players,
-      [id]: {
-        ...state.players[id],
-        isFacingRight: inputKey === 'horizontal' && value !== 0
-          ? value > 0
-          : player.isFacingRight,
-        animationType: inputKey === 'horizontal'
-          ? (value !== 0 ? 'run' : 'idle')
-          : state.players[id].animationType,
-        animation: inputKey === 'horizontal'
-          ? (value !== 0 ? animation.makeRun(parent.run) : animation.makeIdle(parent.idle))
-          : player.animation,
-        inputs: {
-          ...state.players[id].inputs,
-          [inputKey]: value,
+  const didPunch = inputKey === 'punch' && value > 0 && player.inputs.punch === 0;
+  const targetIds = player.targets.map(t => t.id);
+
+  const punchEffects = didPunch
+    ? effects.Punch({ sourceId: id, targetIds, OnPunch: PlayerGetPunched })
+    : [];
+
+  return [
+    {
+      ...state,
+      players: {
+        ...state.players,
+        [id]: {
+          ...state.players[id],
+          isFacingRight: inputKey === 'horizontal' && value !== 0
+            ? value > 0
+            : player.isFacingRight,
+          animationType: inputKey === 'horizontal'
+            ? (value !== 0 ? 'run' : 'idle')
+            : state.players[id].animationType,
+          animation: inputKey === 'horizontal'
+            ? (value !== 0 ? animation.makeRun(parent.run) : animation.makeIdle(parent.idle))
+            : player.animation,
+          inputs: {
+            ...state.players[id].inputs,
+            [inputKey]: value,
+          },
         },
       },
     },
-  };
+    punchEffects,
+  ];
+};
+
+export const PlayerGetPunched = (state, { id, sourceId }) => {
+  const player = state.players[id];
+  const sourcePlayer = state.players[sourceId];
+  const force = physics.vec.make(
+    sourcePlayer.object.punch.x * (sourcePlayer.isFacingRight ? 1 : -1),
+    sourcePlayer.object.punch.y,
+  );
+
+  return [
+    {
+      ...state,
+      players: {
+        ...state.players,
+        [id]: {
+          ...player,
+          object: physics.dynamic.applyForce(force, player.object),
+        },
+      },
+    },
+  ];
 };
 
 export const CanvasSetContext = (state, context) => ({
@@ -181,15 +213,30 @@ export const Render = (state) => {
         state.game,
       );
 
+      const object = physics.dynamic.step(
+        state.game,
+        ground,
+        player.object,
+      );
+
+      const targets = players
+        .filter(p => (
+          p.id !== player.id
+          && Math.abs(p.object.position.y - player.object.position.y) < 30
+          && (
+            player.isFacingRight
+              ? (p.object.position.x > (player.object.position.x - 10) && p.object.position.x < (player.object.position.x + 40))
+              : (p.object.position.x < (player.object.position.x + 10) && p.object.position.x > (player.object.position.x - 40))
+          )
+        ));
+
       return {
         ...player,
-        object: physics.dynamic.step(
-          state.game,
-          ground,
-          player.object,
-        ),
+        targets,
+        object,
       };
     });
+
   }, state.game));
 
   const idsToKill = players

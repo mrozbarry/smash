@@ -35,7 +35,7 @@ export const game = (state) => h('div', {
       padding: '1rem',
       marginRight: '0.5rem',
       border: '1px black solid',
-      width: 'calc(1280px / 4)',
+      width: `calc(${state.canvas.width}px / 4)`,
     },
   }, [
     h('div', {
@@ -58,6 +58,7 @@ export const game = (state) => h('div', {
     }, [
       player.id,
       h('small', {}, `Died ${player.deaths} time${player.deaths === 1 ? '' : 's'}`),
+      h('small', {}, player.targets.map(t => t.id).join(',')),
     ]),
   ]))),
 ]);
