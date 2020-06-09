@@ -1,7 +1,13 @@
 import * as vec from './vector2d';
+import * as aabb from './aabb';
 
 export const make = (position, size) => ({
   position,
+  aabb: aabb.make(
+    vec.make(position.x, position.y - (size.y / 2)),
+    //size,
+    vec.make(size.x, size.y),
+  ),
   speed: vec.zero,
   force: vec.zero,
   isOnGround: false,
@@ -10,8 +16,8 @@ export const make = (position, size) => ({
   walkSpeed: 0.8,
   jumpSpeed: -9,
   punch: vec.make(
-    5,
-    -4,
+    10,
+    -10,
   ),
 });
 
@@ -91,6 +97,13 @@ export const step = (world, ground, dynamicObject) => {
     isOnGround,
     isJumping: isOnGround ? false : dynamicObject.isJumping,
     position,
+    aabb: aabb.position(
+      vec.add(
+        position,
+        vec.make(0, dynamicObject.size.y / -2),
+      ),
+      dynamicObject.aabb,
+    ),
     speed: vec.make(
       Math.max(-20, Math.min(20, speedX)),
       Math.max(-20, Math.min(20, speed.y)),

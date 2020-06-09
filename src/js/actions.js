@@ -2,8 +2,6 @@ import * as effects from './effects';
 import * as physics from './physics';
 import * as animation from './animation';
 
-import * as assetWoodCutter from '../sprites/craftpix-891178-free-3-character-sprite-sheets-pixel-art/1 Woodcutter/*.png';
-
 const omit = (key, object) => {
   const { [key]: _discard, ...nextObject } = object;
   return nextObject;
@@ -77,6 +75,7 @@ export const PlayerAdd = (state, { id, color }) => {
         id,
         character,
         isFacingRight: x < state.canvas.width / 2,
+        punchCountdown: null,
         animationType: 'idle',
         animation: animation.makeIdle(parent.idle),
         inputs: {
@@ -94,7 +93,7 @@ export const PlayerAdd = (state, { id, color }) => {
           physics.dynamic.make(
             physics.vec.zero,
             physics.vec.make(
-              40,
+              90,
               90,
             ),
           ),
@@ -142,13 +141,14 @@ export const PlayerInputChange = (state, {
       players: {
         ...state.players,
         [id]: {
-          ...state.players[id],
+          ...player,
+          punchCountdown: didPunch ? 500 : player.punchCountdown,
           isFacingRight: inputKey === 'horizontal' && value !== 0
             ? value > 0
             : player.isFacingRight,
           animationType: inputKey === 'horizontal'
             ? (value !== 0 ? 'run' : 'idle')
-            : state.players[id].animationType,
+            : player.animationType,
           animation: inputKey === 'horizontal'
             ? (value !== 0 ? animation.makeRun(parent.run) : animation.makeIdle(parent.idle))
             : player.animation,
@@ -166,9 +166,12 @@ export const PlayerInputChange = (state, {
 export const PlayerGetPunched = (state, { id, sourceId }) => {
   const player = state.players[id];
   const sourcePlayer = state.players[sourceId];
-  const force = physics.vec.make(
-    sourcePlayer.object.punch.x * (sourcePlayer.isFacingRight ? 1 : -1),
-    sourcePlayer.object.punch.y,
+  const force = physics.vec.add(
+    physics.vec.make(
+      sourcePlayer.object.punch.x * (sourcePlayer.isFacingRight ? 1 : -1),
+      sourcePlayer.object.punch.y,
+    ),
+    sourcePlayer.object.speed,
   );
 
   return [
@@ -219,14 +222,17 @@ export const Render = (state) => {
         player.object,
       );
 
+      const targetDistanceForward = player.object.size.x * 0.6;
+      const targetDisanceBackward = player.object.size.x * 0.3;
+
       const targets = players
         .filter(p => (
           p.id !== player.id
-          && Math.abs(p.object.position.y - player.object.position.y) < 30
+          && Math.abs(p.object.position.y - player.object.position.y) <= ((p.object.size.y + player.object.size.y) / 4)
           && (
             player.isFacingRight
-              ? (p.object.position.x > (player.object.position.x - 10) && p.object.position.x < (player.object.position.x + 40))
-              : (p.object.position.x < (player.object.position.x + 10) && p.object.position.x > (player.object.position.x - 40))
+              ? (p.object.position.x > (player.object.position.x - targetDisanceBackward) && p.object.position.x < (player.object.position.x + targetDistanceForward))
+              : (p.object.position.x < (player.object.position.x + targetDisanceBackward) && p.object.position.x > (player.object.position.x - targetDistanceForward))
           )
         ));
 
