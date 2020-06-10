@@ -45,5 +45,17 @@ export const player = (props) => {
       c('fillStyle', { value: props.color }),
       c('fill'),
     ]),
+    c(equalateralTriangle, {
+      start: vec.add(
+        props.object.aabb.center,
+        vec.make(0, -props.object.aabb.halfSize.y),
+      ),
+      width: 20,
+      height: -10,
+    }, [
+      c('lineWidth', { value: 2 }),
+      c('strokeStyle', { value: 'black' }),
+      c('stroke'),
+    ]),
   ];
 };
