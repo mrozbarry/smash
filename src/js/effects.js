@@ -52,6 +52,18 @@ const LoadSpriteSheetFx = (dispatch, {
 };
 export const LoadSpriteSheet = props => [LoadSpriteSheetFx, props];
 
+export const LoadSpritesForCharacter = props => [
+  'idle',
+  'run',
+  'attack1',
+  'attack2',
+].map((type) => LoadSpriteSheet({
+  ...props,
+  character: props.character.toLowerCase(),
+  type,
+  uri: props.assetCollection[`${props.character}_${type}`],
+}));
+
 const PunchFX = (dispatch, {
   sourceId,
   targetIds,

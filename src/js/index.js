@@ -4,10 +4,14 @@ import * as effects from './effects';
 import * as subscriptions from './subscriptions';
 import * as physics from './physics';
 
+import * as level from './levels/demo';
+
 import { loading as loadingView } from './views/loading';
 import { game as gameView } from './views/game';
 
 import * as assetWoodCutter from '../sprites/craftpix-891178-free-3-character-sprite-sheets-pixel-art/1 Woodcutter/*.png';
+import * as assetGraveRobber from '../sprites/craftpix-891178-free-3-character-sprite-sheets-pixel-art/2 GraveRobber/*.png';
+import * as assetSteamMan from '../sprites/craftpix-891178-free-3-character-sprite-sheets-pixel-art/3 SteamMan/*.png';
 
 const ArrowKeyBinds = {
   'ArrowUp': 'jump',
@@ -37,74 +41,33 @@ const initialState = {
   game: physics.world.make(
     physics.vec.make(0, 25),
     1 / 60,
-    [
-      {
-        x: 300,
-        y: 470,
-        width: 680,
-        height: 300,
-      },
-      {
-        x: 100,
-        y: 700,
-        width: 1080,
-        height: 20,
-      },
-      {
-        x: 150,
-        y: 550,
-        width: 200,
-        height: 20,
-      },
-      {
-        x: 930,
-        y: 550,
-        width: 200,
-        height: 20,
-      },
-      {
-        x: 540,
-        y: 610,
-        width: 200,
-        height: 20,
-      },
-    ],
+    level.geometry,
   ),
 };
+
 
 app({
   init: [
     initialState,
     [
-      effects.LoadSpriteSheet({
-        character: 'woodcutter',
-        type: 'idle',
+      ...effects.LoadSpritesForCharacter({
+        character: 'Woodcutter',
+        assetCollection: assetWoodCutter,
         size: 48,
-        uri: assetWoodCutter.Woodcutter_idle,
         OnLoad: actions.SpriteSheetLoad,
         OnReady: actions.SpriteSheetReady,
       }),
-      effects.LoadSpriteSheet({
-        character: 'woodcutter',
-        type: 'run',
+      ...effects.LoadSpritesForCharacter({
+        character: 'GraveRobber',
+        assetCollection: assetGraveRobber,
         size: 48,
-        uri: assetWoodCutter.Woodcutter_run,
         OnLoad: actions.SpriteSheetLoad,
         OnReady: actions.SpriteSheetReady,
       }),
-      effects.LoadSpriteSheet({
-        character: 'woodcutter',
-        type: 'attack1',
+      ...effects.LoadSpritesForCharacter({
+        character: 'SteamMan',
+        assetCollection: assetSteamMan,
         size: 48,
-        uri: assetWoodCutter.Woodcutter_attack1,
-        OnLoad: actions.SpriteSheetLoad,
-        OnReady: actions.SpriteSheetReady,
-      }),
-      effects.LoadSpriteSheet({
-        character: 'woodcutter',
-        type: 'attack2',
-        size: 48,
-        uri: assetWoodCutter.Woodcutter_attack2,
         OnLoad: actions.SpriteSheetLoad,
         OnReady: actions.SpriteSheetReady,
       }),
@@ -113,7 +76,14 @@ app({
 
   view: (state) => h('div', {}, [
     state.showGame
-      ? gameView(state)
+    ? gameView({
+      state,
+      characters: {
+        woodcutter: assetWoodCutter.Woodcutter,
+        graverrobber: assetGraveRobber.GraveRobber,
+        steamman: assetSteamMan.SteamMan,
+      },
+    })
       : loadingView(state),
   ]),
 

@@ -7,7 +7,6 @@ const omit = (key, object) => {
   return nextObject;
 };
 
-
 export const SpriteSheetLoad = (state, {
   character,
   type,
@@ -61,10 +60,11 @@ export const StartGame = (state) => [
 ];
 
 
+const characters = ['graverobber', 'woodcutter', 'steamman'];
 export const PlayerAdd = (state, { id, color, keybinds }) => {
   const x = (state.canvas.width / 2) + ((Math.random() * 300) - 150);
 
-  const character = 'woodcutter';
+  const character = characters[Math.floor(Math.random() * characters.length)];
   const parent = state.spriteSheets[character];
 
   return {
@@ -144,6 +144,8 @@ export const PlayerInputChange = (state, {
       parent.attack1,
       player.animation,
     );
+  } else if (playerAnimation.name.startsWith('attack')) {
+    // Noop
   } else if (inputKey === 'horizontal' && value === 0) {
     playerAnimation = animation.makeIdle(parent.idle);
   } else if (inputKey === 'horizontal' && value !== 0) {
