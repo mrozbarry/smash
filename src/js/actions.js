@@ -48,10 +48,10 @@ export const SpriteSheetReady = (state, {
 });
 
 
-export const StartGame = (state) => [
+export const StartLocalGame = (state) => [
   {
     ...state,
-    showGame: true,
+    view: 'game',
   },
   effects.Declarativas({
     state,

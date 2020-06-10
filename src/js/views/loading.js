@@ -25,11 +25,11 @@ export const loading = (state) => {
   }, [
     h('h1', {}, 'JS Smash'),
     done < items.length
-    ? [
+      ? [
         h('h2', {}, 'Loading...'),
-        h('progress', { max: items.length, value: done })
+        h('progress', { max: items.length, value: done }),
       ]
-      : h('button', { onclick: actions.StartGame }, 'Play'),
+      : h('button', { onclick: actions.StartLocalGame }, 'Local Play'),
 
     h('hr', { style: { width: '50%', margin: '3rem 0' } }),
 

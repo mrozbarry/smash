@@ -30,7 +30,7 @@ const WasdKeyBinds = {
 };
 
 const initialState = {
-  showGame: false,
+  view: 'loading',
   canvas: {
     width: 1280,
     height: 720,
@@ -45,6 +45,22 @@ const initialState = {
   ),
 };
 
+const viewScene = (state) => {
+  switch (state.view) {
+  case 'loading':
+    return h(loadingView, state);
+
+  case 'game':
+    return h(gameView, {
+      state,
+      characters: {
+        woodcutter: assetWoodCutter.Woodcutter,
+        graverobber: assetGraveRobber.GraveRobber,
+        steamman: assetSteamMan.SteamMan,
+      },
+    });
+  }
+}
 
 app({
   init: [
@@ -75,20 +91,11 @@ app({
   ],
 
   view: (state) => h('div', {}, [
-    state.showGame
-      ? gameView({
-        state,
-        characters: {
-          woodcutter: assetWoodCutter.Woodcutter,
-          graverobber: assetGraveRobber.GraveRobber,
-          steamman: assetSteamMan.SteamMan,
-        },
-      })
-      : loadingView(state),
+    h(viewScene, state),
   ]),
 
   subscriptions: (state) => [
-    state.showGame && [
+    state.view === 'game' && [
       subscriptions.CanvasContext({
         canvasQuerySelector: '#canvas',
         SetContext: actions.CanvasSetContext,
