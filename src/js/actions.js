@@ -61,7 +61,7 @@ export const StartGame = (state) => [
 ];
 
 
-export const PlayerAdd = (state, { id, color }) => {
+export const PlayerAdd = (state, { id, color, keybinds }) => {
   const x = (state.canvas.width / 2) + ((Math.random() * 300) - 150);
 
   const character = 'woodcutter';
@@ -77,6 +77,7 @@ export const PlayerAdd = (state, { id, color }) => {
         isFacingRight: x < state.canvas.width / 2,
         punchCountdown: null,
         animation: animation.makeIdle(parent.idle),
+        keybinds,
         inputs: {
           horizontal: 0,
           vertical: 0,

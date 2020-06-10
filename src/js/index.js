@@ -14,7 +14,7 @@ const ArrowKeyBinds = {
   'ArrowLeft': 'left',
   'ArrowRight': 'right',
   'Slash': 'punch',
-  'Period': 'kick',
+  // 'Period': 'kick',
 };
 
 const WasdKeyBinds = {
@@ -22,7 +22,7 @@ const WasdKeyBinds = {
   'KeyA': 'left',
   'KeyD': 'right',
   'KeyF': 'punch',
-  'KeyE': 'kick',
+  // 'KeyE': 'kick',
 };
 
 const initialState = {

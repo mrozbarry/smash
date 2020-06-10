@@ -1,5 +1,62 @@
 import { h } from 'hyperapp';
 
+const card = ({ state, player }) => h('div', {
+  style: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    padding: '1rem',
+    marginRight: '0.5rem',
+    border: '1px black solid',
+    width: `calc(${state.canvas.width}px / 4)`,
+  },
+}, [
+  h('div', {
+    style: {
+      width: '48px',
+      height: '48px',
+      border: '1px black solid',
+      borderRadius: '100%',
+      backgroundColor: player.color,
+      marginRight: '0.5rem',
+    },
+  }),
+  h('div', {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+      justifyContent: 'center',
+    },
+  }, [
+    player.id,
+    h('small', {}, `Died ${player.deaths} time${player.deaths === 1 ? '' : 's'}`),
+  ]),
+]);
+
+const controls = ({ player }) => h('div', {
+  style: {
+    display: 'flex',
+    flexDirection: 'column',
+    margin: '1rem 0',
+  },
+}, [
+  h('strong', {
+    style: {
+      'text-decoration': 'underline',
+    },
+  }, `${player.id} controls`),
+  Object.keys(player.keybinds).map(k => h('div', {
+    style: {
+      display: 'block',
+    },
+  }, [
+    h('span', {}, player.keybinds[k]),
+    h('strong', {}, `: ${k}`),
+  ])),
+]);
+
 export const game = (state) => h('div', {
   style: {
     display: 'flex',
@@ -26,38 +83,9 @@ export const game = (state) => h('div', {
       justifyContent: 'flex-start',
       marginTop: '1rem',
     },
-  }, Object.values(state.players).map((player) => h('div', {
-    style: {
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'flex-start',
-      padding: '1rem',
-      marginRight: '0.5rem',
-      border: '1px black solid',
-      width: `calc(${state.canvas.width}px / 4)`,
-    },
-  }, [
-    h('div', {
-      style: {
-        width: '48px',
-        height: '48px',
-        border: '1px black solid',
-        borderRadius: '100%',
-        backgroundColor: player.color,
-        marginRight: '0.5rem',
-      },
-    }),
-    h('div', {
-      style: {
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-      },
-    }, [
-      player.id,
-      h('small', {}, `Died ${player.deaths} time${player.deaths === 1 ? '' : 's'}`),
-    ]),
-  ]))),
+  }, Object.values(state.players).map((player) => h(card, { state, player }))),
+
+  h('div', {}, (
+    Object.values(state.players).map((player) => h(controls, { player }))
+  )),
 ]);

@@ -20,7 +20,6 @@ export const CanvasContext = props => [CanvasContextSub, props];
 
 
 const KeyboardPlayerSub = (dispatch, {
-  canvasQuerySelector,
   id,
   color,
   keybinds,
@@ -86,7 +85,7 @@ const KeyboardPlayerSub = (dispatch, {
   parent.addEventListener('keyup', keyup);
   parent.addEventListener('keydown', keydown);
 
-  requestAnimationFrame(() => dispatch(OnAdd, { id, color }));
+  requestAnimationFrame(() => dispatch(OnAdd, { id, color, keybinds }));
 
   return () => {
     parent.removeEventListener('keyup', keyup);
