@@ -76,14 +76,14 @@ app({
 
   view: (state) => h('div', {}, [
     state.showGame
-    ? gameView({
-      state,
-      characters: {
-        woodcutter: assetWoodCutter.Woodcutter,
-        graverrobber: assetGraveRobber.GraveRobber,
-        steamman: assetSteamMan.SteamMan,
-      },
-    })
+      ? gameView({
+        state,
+        characters: {
+          woodcutter: assetWoodCutter.Woodcutter,
+          graverobber: assetGraveRobber.GraveRobber,
+          steamman: assetSteamMan.SteamMan,
+        },
+      })
       : loadingView(state),
   ]),
 

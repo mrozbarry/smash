@@ -23,9 +23,25 @@ export const loading = (state) => {
       margin: '0 auto',
     },
   }, [
-    h('h1', {}, `Loading... (${done} / ${items.length})`),
+    h('h1', {}, 'JS Smash'),
     done < items.length
-      ? h('progress', { max: items.length, value: done })
+    ? [
+        h('h2', {}, 'Loading...'),
+        h('progress', { max: items.length, value: done })
+      ]
       : h('button', { onclick: actions.StartGame }, 'Play'),
+
+    h('hr', { style: { width: '50%', margin: '3rem 0' } }),
+
+    h('h3', {}, 'Powered By:'),
+    h('ul', {}, [
+      h('li', {}, h('a', { href: 'https://github.com/jorgebucaran/hyperapp', rel: 'noopener', target: '_blank' }, 'Hyperapp')),
+      h('li', {}, h('a', { href: 'https://github.com/mrozbarry/declarativas', rel: 'noopener', target: '_blank' }, 'Declarativas')),
+      h('li', {}, h('a', { href: 'https://peerjs.com', rel: 'noopener', target: '_blank' }, 'PeerJS')),
+      h('li', {}, [
+        'And Sprites from ',
+        h('a', { href: 'https://craftpix.net/freebies/free-3-character-sprite-sheets-pixel-art/', rel: 'noopener', target: '_blank' }, 'CraftPix.net'),
+      ]),
+    ]),
   ]);
 };
