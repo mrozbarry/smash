@@ -3,7 +3,6 @@ import { mirror } from './mirror';
 import { translate } from './translate';
 import { equalateralTriangle } from './triangle';
 
-import { fromAabb } from '../../physics/rect';
 import * as vec from '../../physics/vector2d';
 
 export const player = (props) => {
@@ -13,10 +12,6 @@ export const player = (props) => {
     width: props.object.size.x,
     height: props.object.size.y,
   };
-
-  const boundingBox = fromAabb(props.object.aabb);
-
-  const offset = props.object.size.x / 4;
 
   const x = props.animation.frame * 48
 
@@ -50,10 +45,5 @@ export const player = (props) => {
       c('fillStyle', { value: props.color }),
       c('fill'),
     ]),
-
-    c('lineWidth', { value: 3 }),
-    c('strokeStyle', { value: 'red' }),
-    c('strokeRect', boundingBox),
-    
   ];
 };

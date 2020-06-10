@@ -58,7 +58,6 @@ export const game = (state) => h('div', {
     }, [
       player.id,
       h('small', {}, `Died ${player.deaths} time${player.deaths === 1 ? '' : 's'}`),
-      h('small', {}, player.targets.map(t => t.id).join(',')),
     ]),
   ]))),
 ]);
