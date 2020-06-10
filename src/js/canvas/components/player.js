@@ -1,6 +1,10 @@
 import { c } from 'declarativas';
-import { revertableState } from './revertableState';
 import { mirror } from './mirror';
+import { translate } from './translate';
+import { equalateralTriangle } from './triangle';
+
+import { fromAabb } from '../../physics/rect';
+import * as vec from '../../physics/vector2d';
 
 export const player = (props) => {
   const rect = {
@@ -10,27 +14,19 @@ export const player = (props) => {
     height: props.object.size.y,
   };
 
-  const half = props.object.size.x / 2;
+  const boundingBox = fromAabb(props.object.aabb);
+
+  const offset = props.object.size.x / 4;
 
   const x = props.animation.frame * 48
 
   return [
-    c(revertableState, {}, [
-      c('translate', {
-        x: props.object.position.x - (props.object.size.x / 2),
-        y: props.object.position.y - props.object.size.y,
-      }),
-
-      c('fillStyle', { value: props.color }),
-      c('beginPath'),
-      c('moveTo', { x: half, y: 0 }),
-      c('lineTo', { x: half + 10, y: -10 }),
-      c('lineTo', { x: half - 10, y: -10 }),
-      c('closePath'),
-      c('fill'),
-
+    c(translate, {
+      x: props.object.position.x - (props.object.size.x / 2),
+      y: props.object.position.y - props.object.size.y,
+    }, [
       c(mirror, { horizontal: !props.isFacingRight }, [
-        !props.isFacingRight && c('translate', { x: -rect.width, y: 0 }),
+        !props.isFacingRight && c('translate', { x: rect.width / -2, y: 0 }),
         c('drawImage', {
           image: props.animation.spriteSheet.image,
           source: {
@@ -39,21 +35,25 @@ export const player = (props) => {
             width: props.animation.spriteSheet.size,
             height: props.animation.spriteSheet.size,
           },
-          destination: {
-            ...rect,
-          },
+          destination: rect,
         }),
       ]),
     ]),
+    c(equalateralTriangle, {
+      start: vec.add(
+        props.object.aabb.center,
+        vec.make(0, -props.object.aabb.halfSize.y),
+      ),
+      width: 20,
+      height: -10,
+    }, [
+      c('fillStyle', { value: props.color }),
+      c('fill'),
+    ]),
+
     c('lineWidth', { value: 3 }),
     c('strokeStyle', { value: 'red' }),
-    c('strokeRect', {
-      x: props.object.aabb.center.x - props.object.aabb.halfSize.x,
-      y: props.object.aabb.center.y - props.object.aabb.halfSize.y,
-      width: props.object.aabb.halfSize.x * 2,
-      height: props.object.aabb.halfSize.y * 2,
-
-    }),
+    c('strokeRect', boundingBox),
     
   ];
 };

@@ -1,12 +1,12 @@
 import * as vec from './vector2d';
+import * as rect from './rect';
 import * as aabb from './aabb';
 
 export const make = (position, size) => ({
   position,
   aabb: aabb.make(
-    vec.make(position.x, position.y - (size.y / 2)),
-    //size,
-    vec.make(size.x, size.y),
+    vec.zero,
+    vec.zero,
   ),
   speed: vec.zero,
   force: vec.zero,
@@ -21,10 +21,10 @@ export const make = (position, size) => ({
   ),
 });
 
-export const reset = (world, dynamicObject) => {
+export const reset = (world, object) => {
   const geo = world.geometry[Math.floor(Math.random() * world.geometry.length)];
   return {
-    ...dynamicObject,
+    ...object,
     isOnGround: false,
     isJumping: false,
     position: vec.make(
@@ -35,25 +35,25 @@ export const reset = (world, dynamicObject) => {
   };
 };
 
-export const applyInputs = (inputs, dynamicObject) => {
-  const isJumping = dynamicObject.isOnGround && inputs.jump > 0;
+export const applyInputs = (inputs, object) => {
+  const isJumping = object.isOnGround && inputs.jump > 0;
 
   return {
-    ...dynamicObject,
+    ...object,
     isJumping,
     speed: vec.add(
       vec.make(
-        dynamicObject.walkSpeed * inputs.horizontal,
-        isJumping && !dynamicObject.isJumping ? dynamicObject.jumpSpeed : 0,
+        object.walkSpeed * inputs.horizontal,
+        isJumping && !object.isJumping ? object.jumpSpeed : 0,
       ),
-      dynamicObject.speed,
+      object.speed,
     ),
   };
 };
 
-export const step = (world, ground, dynamicObject) => {
+export const step = (world, ground, isFacingRight, object) => {
   const speed = vec.add(
-    dynamicObject.speed,
+    object.speed,
     vec.multiply(
       world.timestep,
       world.gravity,
@@ -61,7 +61,7 @@ export const step = (world, ground, dynamicObject) => {
   );
 
   const isOnGround = ground
-    && ground.y === dynamicObject.position.y
+    && ground.y === object.position.y
     && speed.y >= 0;
 
   if (isOnGround && speed.y > 0) {
@@ -70,11 +70,11 @@ export const step = (world, ground, dynamicObject) => {
 
   let position = vec.add(
     speed,
-    dynamicObject.position,
+    object.position,
   );
 
   position = vec.add(
-    dynamicObject.force,
+    object.force,
     position,
   );
 
@@ -87,23 +87,27 @@ export const step = (world, ground, dynamicObject) => {
     speedX = 0;
   }
 
-  let force = vec.multiply(0.8, dynamicObject.force);
+  let force = vec.multiply(0.8, object.force);
   force.x = Math.abs(force.x) < 0.01 ? 0 : force.x;
   force.y = Math.abs(force.y) < 0.01 ? 0 : force.y;
 
+  const boundingBox = rect.make(
+    vec.make(
+      object.position.x - (object.size.x / 2) - (isFacingRight ? 0 : (object.size.x / 4)),
+      object.position.y - (object.size.y / 1.15),
+    ),
+    vec.make(
+      object.size.x / 1.5,
+      object.size.y / 1.15,
+    ),
+  );
 
   return {
-    ...dynamicObject,
+    ...object,
     isOnGround,
-    isJumping: isOnGround ? false : dynamicObject.isJumping,
+    isJumping: isOnGround ? false : object.isJumping,
     position,
-    aabb: aabb.position(
-      vec.add(
-        position,
-        vec.make(0, dynamicObject.size.y / -2),
-      ),
-      dynamicObject.aabb,
-    ),
+    aabb: aabb.fromRect(boundingBox),
     speed: vec.make(
       Math.max(-20, Math.min(20, speedX)),
       Math.max(-20, Math.min(20, speed.y)),
@@ -112,7 +116,7 @@ export const step = (world, ground, dynamicObject) => {
   };
 };
 
-export const applyForce = (force, dynamicObject) => ({
-  ...dynamicObject,
+export const applyForce = (force, object) => ({
+  ...object,
   force,
 });

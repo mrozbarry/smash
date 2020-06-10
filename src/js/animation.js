@@ -20,7 +20,7 @@ const makeLoop = (name, timePerFrame, spriteSheet) => {
   const frameTime = timePerFrame / 1000;
   return make(name, spriteSheet, (_player, animation) => {
     let { time, frame } = animation;
-    if (time >= frameTime) {
+    while (time >= frameTime) {
       time -= frameTime;
       frame = (frame + 1) % animation.spriteSheet.frames;
     }

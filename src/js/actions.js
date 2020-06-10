@@ -211,14 +211,14 @@ export const Render = (state) => {
   const game = physics.world.applyDelta(delta, physics.integrate(delta, () => {
     players = players.map(player => {
       const ground = physics.world.detectClosestPlatform(
-        player.object.position,
-        player.object.size,
+        player.object,
         state.game,
       );
 
       const object = physics.dynamic.step(
         state.game,
         ground,
+        player.isFacingRight,
         player.object,
       );
 

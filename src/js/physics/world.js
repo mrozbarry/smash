@@ -1,5 +1,3 @@
-import * as vec from './vector2d';
-
 export const make = (gravity, timestep, geometry = []) => ({
   gravity,
   timestep,
@@ -14,19 +12,18 @@ export const setAccumulator = (accumulator, world) => ({
   accumulator,
 });
 
-export const detectClosestPlatform = (position, size, world) => {
-  const halfWidth = size.x / 2;
-  const x1 = position.x - halfWidth;
-  const x2 = position.x + halfWidth;
+export const detectClosestPlatform = (object, world) => {
+  const x1 = object.aabb.center.x - object.aabb.halfSize.x;
+  const x2 = object.aabb.center.x + object.aabb.halfSize.x;
 
   return world.geometry
     .filter(rect => (
       (
         (rect.x <= x1 && (rect.x + rect.width) >= x1)
-        && rect.y >= position.y
+        && rect.y >= object.position.y
       ) || (
         (rect.x <= x2 && (rect.x + rect.width) >= x2)
-        && rect.y >= position.y
+        && rect.y >= object.position.y
       )
     ))
     .sort((a, b) => a.y - b.y)[0];
