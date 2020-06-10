@@ -42,9 +42,12 @@ export const applyInputs = (inputs, object) => {
     ...object,
     isJumping,
     speed: vec.add(
-      vec.make(
-        object.walkSpeed * inputs.horizontal,
-        isJumping && !object.isJumping ? object.jumpSpeed : 0,
+      vec.multiply(
+        (inputs.punch === 0 ? 1 : 0),
+        vec.make(
+          object.walkSpeed * inputs.horizontal,
+          isJumping && !object.isJumping ? object.jumpSpeed : 0,
+        ),
       ),
       object.speed,
     ),

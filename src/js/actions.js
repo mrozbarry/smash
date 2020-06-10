@@ -76,7 +76,6 @@ export const PlayerAdd = (state, { id, color }) => {
         character,
         isFacingRight: x < state.canvas.width / 2,
         punchCountdown: null,
-        animationType: 'idle',
         animation: animation.makeIdle(parent.idle),
         inputs: {
           horizontal: 0,
@@ -135,6 +134,21 @@ export const PlayerInputChange = (state, {
     ? effects.Punch({ sourceId: id, targetIds, OnPunch: PlayerGetPunched })
     : [];
 
+  let playerAnimation = player.animation;
+  let punchCountdown = player.punchCountdown;
+  if (didPunch) {
+    punchCountdown = 0.2;
+    playerAnimation = animation.makeAttack(
+      'attack1',
+      parent.attack1,
+      player.animation,
+    );
+  } else if (inputKey === 'horizontal' && value === 0) {
+    playerAnimation = animation.makeIdle(parent.idle);
+  } else if (inputKey === 'horizontal' && value !== 0) {
+    playerAnimation = animation.makeRun(parent.run);
+  }
+
   return [
     {
       ...state,
@@ -142,16 +156,11 @@ export const PlayerInputChange = (state, {
         ...state.players,
         [id]: {
           ...player,
-          punchCountdown: didPunch ? 500 : player.punchCountdown,
+          punchCountdown: player.animation.name.startsWith('attack') ? player.punchCountdown : punchCountdown,
           isFacingRight: inputKey === 'horizontal' && value !== 0
             ? value > 0
             : player.isFacingRight,
-          animationType: inputKey === 'horizontal'
-            ? (value !== 0 ? 'run' : 'idle')
-            : player.animationType,
-          animation: inputKey === 'horizontal'
-            ? (value !== 0 ? animation.makeRun(parent.run) : animation.makeIdle(parent.idle))
-            : player.animation,
+          animation: playerAnimation,
           inputs: {
             ...state.players[id].inputs,
             [inputKey]: value,
@@ -222,7 +231,7 @@ export const Render = (state) => {
         player.object,
       );
 
-      const targetDistanceForward = player.object.size.x * 0.6;
+      const targetDistanceForward = player.object.size.x;
       const targetDisanceBackward = player.object.size.x * 0.3;
 
       const targets = players
