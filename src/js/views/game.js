@@ -50,7 +50,7 @@ const controls = ({ player }) => h('div', {
       'text-decoration': 'underline',
     },
   }, `${player.name} controls`),
-  Object.keys(player.keybinds).map(k => h('div', {
+  Object.keys(player.keybinds || {}).map(k => h('div', {
     style: {
       display: 'block',
     },

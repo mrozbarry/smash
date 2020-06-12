@@ -270,16 +270,34 @@ export const characterSelect = ({ state, characters }) => {
       }, [
         h('select', {
           id: 'new-player-controls',
-          oninput: [
-            actions.CharacterSelectionSetName,
-            e => ({ name: e.target.value }),
-          ],
-        }, Object.keys(state.keybinds).map((kb) => (
-          h('option', {
-            selected: state.characterSelection.keybind === kb,
-            value: kb,
-          }, kb)
-        ))),
+        }, [
+          Object.keys(state.keybinds).map((kb) => (
+            h('option', {
+              selected: state.characterSelection.keybind === kb,
+              value: kb,
+              onclick: [
+                actions.CharacterSelectionSetKeybind,
+                () => ({
+                  keybind: kb,
+                  gamepadIndex: null,
+                }),
+              ],
+            }, kb)
+          )),
+          state.gamepads.filter(Boolean).map((gamepad) => (
+            h('option', {
+              selected: state.characterSelection.gamepadIndex === gamepad.index,
+              value: gamepad.index,
+              onclick: [
+                actions.CharacterSelectionSetKeybind,
+                () => ({
+                  keybind: null,
+                  gamepadIndex: gamepad.index,
+                }),
+              ],
+            }, `Gamepad ${gamepad.index} (${gamepad.id})`)
+          )),
+        ]),
       ]),
       h('div', { style: { flexGrow: 1 } }),
       h('button', { type: 'submit' }, 'Add Player'),

@@ -56,6 +56,7 @@ const initialState = {
     color: randomColor(),
     name: '',
     keybind: 'Arrows',
+    gamepadIndex: null,
   },
   connections: [],
 };
@@ -127,13 +128,20 @@ app({
       }),
 
       state.connections.map((connection) => (
-        subscriptions.KeyboardPlayer({
-          ...connection,
-          keybinds: state.keybinds[connection.keybind],
-          OnAdd: actions.PlayerAdd,
-          OnRemove: actions.PlayerRemove,
-          OnInputChange: actions.PlayerInputChange,
-        })
+        connection.gamepadIndex >= 0
+          ? subscriptions.GamepadPlayer({
+            ...connection,
+            OnAdd: actions.PlayerAdd,
+            OnRemove: actions.PlayerRemove,
+            OnInputChange: actions.PlayerInputChange,
+          })
+          : subscriptions.KeyboardPlayer({
+            ...connection,
+            keybinds: state.keybinds[connection.keybind],
+            OnAdd: actions.PlayerAdd,
+            OnRemove: actions.PlayerRemove,
+            OnInputChange: actions.PlayerInputChange,
+          })
       )),
     ],
     subscriptions.GamepadConnections({

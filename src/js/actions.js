@@ -70,11 +70,12 @@ export const CharacterSelectionSetName = (state, { name }) => ({
   },
 });
 
-export const CharacterSelectionSetKeybind = (state, { keybind }) => ({
+export const CharacterSelectionSetKeybind = (state, { keybind, gamepadIndex }) => ({
   ...state,
   characterSelection: {
     ...state.characterSelection,
     keybind,
+    gamepadIndex,
   },
 });
 
@@ -84,6 +85,7 @@ export const CharacterSelectionAddLocalConnection = (state) => ({
     color: randomColor(),
     name: '',
     keybind: 'Arrows',
+    gamepadIndex: null,
   },
   connections: [
     ...state.connections,
@@ -93,6 +95,7 @@ export const CharacterSelectionAddLocalConnection = (state) => ({
       color: state.characterSelection.color,
       name: state.characterSelection.name,
       keybind: state.characterSelection.keybind,
+      gamepadIndex: state.characterSelection.gamepadIndex,
       character: 'woodcutter',
       ready: false,
     },

@@ -103,7 +103,7 @@ const KeyboardPlayerSub = (dispatch, {
 };
 export const KeyboardPlayer = props => [KeyboardPlayerSub, props];
 
-const GamepadPlayerSub = (dispatch, {
+const GamepadPlayerSubFX = (dispatch, {
   id,
   name,
   color,
@@ -118,31 +118,30 @@ const GamepadPlayerSub = (dispatch, {
   let handle = null;
 
   let state = {
-    horizontal: 0,
+    horizontalStick: 0,
+    horizontalDPad: 0,
     jump: 0,
     punch: 0,
   };
 
+  const threshold = (min, value) => Math.abs(value) >= min ? Math.sign(value): 0;
+
   const binds = [
     {
-      inputKey: 'horizontal',
-      value: (gamepad) => Math.abs(gamepad.axis[0]) > 0.15
-        ? gamepad.axis[0]
-        : 0,
+      inputKey: 'horizontalStick',
+      value: (gamepad) => threshold(0.2, gamepad.axes[0]),
     },
     {
-      inputKey: 'horizontal',
-      value: (gamepad) => Math.abs(gamepad.axis[6]) > 0.15
-        ? gamepad.axis[0]
-        : 0,
+      inputKey: 'horizontalDPad',
+      value: (gamepad) => gamepad.axes[6],
     },
     {
       inputKey: 'jump',
-      value: (gamepad) => gamepad.buttons[0],
+      value: (gamepad) => gamepad.buttons[0].value,
     },
     {
       inputKey: 'punch',
-      value: (gamepad) => gamepad.buttons[2],
+      value: (gamepad) => gamepad.buttons[2].value,
     },
   ];
 
@@ -168,15 +167,28 @@ const GamepadPlayerSub = (dispatch, {
 
     const gamepad = navigator.getGamepads()[gamepadIndex];
     if (!gamepad || gamepad.timestamp === lastChange) {
+      handle = requestAnimationFrame(checkGamepad);
       return;
     }
 
-    const changes = binds.reduce((toChange, bind) => [
-      ...toChange,
-      ...update(bind.inputKey, bind.value(gamepad)),
-    ], []);
+    const prevState = { ...state };
+    let changes = binds
+      .reduce((toChange, bind) => [
+        ...toChange,
+        ...update(bind.inputKey, bind.value(gamepad)),
+      ], []);
 
-    for(const change of changes) {
+    if (prevState.horizontalDPad !== state.horizontalDPad || prevState.horizontalStick !== state.horizontalStick) {
+      changes = changes
+        .filter(c => c.inputKey === 'horizontalStick' || c.inputKey === 'horizontalDPad')
+        .concat({
+          id,
+          inputKey: 'horizontal',
+          value: state.horizontalDPad || state.horizontalStick || 0,
+        });
+    }
+
+    for (const change of changes) {
       dispatch(OnInputChange, change);
     }
 
@@ -202,24 +214,22 @@ const GamepadPlayerSub = (dispatch, {
     requestAnimationFrame(() => dispatch(OnRemove, { id }));
   };
 };
-export const GamepadPlayer = props => [GamepadPlayerSub, props];
+export const GamepadPlayer = props => [GamepadPlayerSubFX, props];
 
 const GamepadConnectionsFX = (dispatch, { OnGamepadsChange }) => {
   const onChange = (event) => {
-    console.log('Gamepads Changed');
-    //dispatch(
-      //OnGamepadsChange,
-      //Array.from(navigator.getGamepads()),
-    //);
+    dispatch(
+      OnGamepadsChange,
+      Array.from(navigator.getGamepads()),
+    );
   };
 
-  window.addEventListener('gamepadconnected', console.log);
-  // window.addEventListener('gamepaddisconnected', onChange);
+  window.addEventListener('gamepadconnected', onChange);
+  window.addEventListener('gamepaddisconnected', onChange);
 
   return () => {
-    console.log('exiting gamepad listener');
     window.removeEventListener('gamepadconnected', onChange);
-    // window.removeEventListener('gamepaddisconnected', onChange);
+    window.removeEventListener('gamepaddisconnected', onChange);
   };
 };
 export const GamepadConnections = props => [GamepadConnectionsFX, props];
