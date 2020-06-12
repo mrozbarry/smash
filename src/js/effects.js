@@ -11,8 +11,7 @@ const DeclarativasFX = (dispatch, {
       declarativas.render(
         state.canvas.context,
         canvas.view(state),
-      );
-    }
+      ); }
 
     dispatch(AfterRenderAction);
   });

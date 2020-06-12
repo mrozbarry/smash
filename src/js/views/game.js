@@ -26,8 +26,6 @@ const card = ({ state, player, character }) => h('div', {
     },
   }),
   h('div', {
-  }),
-  h('div', {
     style: {
       display: 'flex',
       flexDirection: 'column',
@@ -35,7 +33,7 @@ const card = ({ state, player, character }) => h('div', {
       justifyContent: 'center',
     },
   }, [
-    player.id,
+    player.name,
     h('small', {}, `Died ${player.deaths} time${player.deaths === 1 ? '' : 's'}`),
   ]),
 ]);
@@ -51,7 +49,7 @@ const controls = ({ player }) => h('div', {
     style: {
       'text-decoration': 'underline',
     },
-  }, `${player.id} controls`),
+  }, `${player.name} controls`),
   Object.keys(player.keybinds).map(k => h('div', {
     style: {
       display: 'block',

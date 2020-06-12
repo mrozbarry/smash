@@ -1,4 +1,7 @@
 import { app, h } from 'hyperapp';
+
+import randomColor from 'randomcolor';
+
 import * as actions from './actions';
 import * as effects from './effects';
 import * as subscriptions from './subscriptions';
@@ -7,6 +10,7 @@ import * as physics from './physics';
 import * as level from './levels/demo';
 
 import { loading as loadingView } from './views/loading';
+import { characterSelect as characterSelectView } from './views/characterSelect';
 import { game as gameView } from './views/game';
 
 import * as assetWoodCutter from '../sprites/craftpix-891178-free-3-character-sprite-sheets-pixel-art/1 Woodcutter/*.png';
@@ -36,6 +40,7 @@ const initialState = {
     height: 720,
     context: null,
   },
+  gamepads: [null, null, null, null],
   spriteSheets: {},
   players: {},
   game: physics.world.make(
@@ -43,12 +48,32 @@ const initialState = {
     1 / 60,
     level.geometry,
   ),
+  keybinds: {
+    Arrows: ArrowKeyBinds,
+    WASD: WasdKeyBinds,
+  },
+  characterSelection: {
+    color: randomColor(),
+    name: '',
+    keybind: 'Arrows',
+  },
+  connections: [],
 };
 
 const viewScene = (state) => {
   switch (state.view) {
   case 'loading':
     return h(loadingView, state);
+
+  case 'characterSelect':
+    return h(characterSelectView, {
+      state,
+      characters: {
+        woodcutter: assetWoodCutter.Woodcutter,
+        graverobber: assetGraveRobber.GraveRobber,
+        steamman: assetSteamMan.SteamMan,
+      },
+    });
 
   case 'game':
     return h(gameView, {
@@ -101,24 +126,19 @@ app({
         SetContext: actions.CanvasSetContext,
       }),
 
-      subscriptions.KeyboardPlayer({
-        id: 'Arrows',
-        color: '#f0f',
-        keybinds: ArrowKeyBinds,
-        OnAdd: actions.PlayerAdd,
-        OnRemove: actions.PlayerRemove,
-        OnInputChange: actions.PlayerInputChange,
-      }),
-
-      subscriptions.KeyboardPlayer({
-        id: 'WASD',
-        color: '#0ff',
-        keybinds: WasdKeyBinds,
-        OnAdd: actions.PlayerAdd,
-        OnRemove: actions.PlayerRemove,
-        OnInputChange: actions.PlayerInputChange,
-      }),
+      state.connections.map((connection) => (
+        subscriptions.KeyboardPlayer({
+          ...connection,
+          keybinds: state.keybinds[connection.keybind],
+          OnAdd: actions.PlayerAdd,
+          OnRemove: actions.PlayerRemove,
+          OnInputChange: actions.PlayerInputChange,
+        })
+      )),
     ],
+    subscriptions.GamepadConnections({
+      OnGamepadsChange: actions.GamepadsUpdate,
+    }),
   ],
 
   node: document.querySelector('#app'),

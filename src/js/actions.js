@@ -1,3 +1,5 @@
+import randomColor from 'randomcolor';
+
 import * as effects from './effects';
 import * as physics from './physics';
 import * as animation from './animation';
@@ -6,6 +8,11 @@ const omit = (key, object) => {
   const { [key]: _discard, ...nextObject } = object;
   return nextObject;
 };
+
+export const GamepadsUpdate = (state, gamepads) => ({
+  ...state,
+  gamepads,
+});
 
 export const SpriteSheetLoad = (state, {
   character,
@@ -47,6 +54,76 @@ export const SpriteSheetReady = (state, {
   },
 });
 
+export const CharacterSelectionSetColor = (state, { color }) => ({
+  ...state,
+  characterSelection: {
+    ...state.characterSelection,
+    color,
+  },
+});
+
+export const CharacterSelectionSetName = (state, { name }) => ({
+  ...state,
+  characterSelection: {
+    ...state.characterSelection,
+    name,
+  },
+});
+
+export const CharacterSelectionSetKeybind = (state, { keybind }) => ({
+  ...state,
+  characterSelection: {
+    ...state.characterSelection,
+    keybind,
+  },
+});
+
+export const CharacterSelectionAddLocalConnection = (state) => ({
+  ...state,
+  characterSelection: {
+    color: randomColor(),
+    name: '',
+    keybind: 'Arrows',
+  },
+  connections: [
+    ...state.connections,
+    {
+      type: 'local',
+      id: Math.random().toString(36).slice(2),
+      color: state.characterSelection.color,
+      name: state.characterSelection.name,
+      keybind: state.characterSelection.keybind,
+      character: 'woodcutter',
+      ready: false,
+    },
+  ],
+});
+
+export const ConnectionChangeCharacter = (state, { id, character }) => ({
+  ...state,
+  connections: state.connections.map((connection) => ({
+    ...connection,
+    character: connection.id === id
+      ? character
+      : connection.character,
+  })),
+});
+
+export const ConnectionReady = (state, { id }) => ({
+  ...state,
+  connections: state.connections.map((connection) => ({
+    ...connection,
+    ready: connection.id === id
+      ? true
+      : connection.ready,
+  })),
+});
+
+export const StartCharacterSelect = (state) => ({
+  ...state,
+  view: 'characterSelect',
+});
+
 
 export const StartLocalGame = (state) => [
   {
@@ -60,11 +137,9 @@ export const StartLocalGame = (state) => [
 ];
 
 
-const characters = ['graverobber', 'woodcutter', 'steamman'];
-export const PlayerAdd = (state, { id, color, keybinds }) => {
+export const PlayerAdd = (state, { id, name, color, keybinds, character }) => {
   const x = (state.canvas.width / 2) + ((Math.random() * 300) - 150);
 
-  const character = characters[Math.floor(Math.random() * characters.length)];
   const parent = state.spriteSheets[character];
 
   return {
@@ -73,6 +148,7 @@ export const PlayerAdd = (state, { id, color, keybinds }) => {
       ...state.players,
       [id]: {
         id,
+        name,
         character,
         isFacingRight: x < state.canvas.width / 2,
         punchCountdown: null,

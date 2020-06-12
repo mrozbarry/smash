@@ -29,7 +29,7 @@ export const loading = (state) => {
         h('h2', {}, 'Loading...'),
         h('progress', { max: items.length, value: done }),
       ]
-      : h('button', { onclick: actions.StartLocalGame }, 'Local Play'),
+      : h('button', { onclick: actions.StartCharacterSelect }, 'Local Play'),
 
     h('hr', { style: { width: '50%', margin: '3rem 0' } }),
 
