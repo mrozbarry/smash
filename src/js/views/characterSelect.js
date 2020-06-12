@@ -141,6 +141,10 @@ const player = (props) => {
     ]),
     h('div', { style: { flexGrow: 1 } }),
     h('button', {
+      onclick: [
+        actions.ConnectionRemove,
+        { id : props.id },
+      ],
     }, 'Remove'),
   ]);
 };
@@ -177,7 +181,7 @@ export const characterSelect = ({ state, characters }) => {
   }, [
     h(flexRow, {
       style: {
-        border: '1px red solid',
+        backgroundColor: '#eee',
       },
     }, [
       h('h1', {}, 'JS Smash'),
@@ -219,7 +223,7 @@ export const characterSelect = ({ state, characters }) => {
     h(flexRow, {
       tag: 'form',
       style: {
-        border: '1px red solid',
+        backgroundColor: '#eee',
         justifyContent: 'flex-start',
       },
       onsubmit: [
@@ -236,6 +240,7 @@ export const characterSelect = ({ state, characters }) => {
         h('input', {
           id: 'new-player-color',
           type: 'color',
+          required: true,
           style: {
             width: '48px',
             height: '32px',
@@ -258,6 +263,7 @@ export const characterSelect = ({ state, characters }) => {
           minLength: 3,
           maxLength: 32,
           value: state.characterSelection.name,
+          required: true,
           oninput: [
             actions.CharacterSelectionSetName,
             e => ({ name: e.target.value }),
@@ -270,7 +276,9 @@ export const characterSelect = ({ state, characters }) => {
       }, [
         h('select', {
           id: 'new-player-controls',
+          required: true,
         }, [
+          h('option', { value: '' }, 'Select your controls'),
           Object.keys(state.keybinds).map((kb) => (
             h('option', {
               selected: state.characterSelection.keybind === kb,
@@ -299,6 +307,9 @@ export const characterSelect = ({ state, characters }) => {
           )),
         ]),
       ]),
+      state.gamepads.filter(Boolean).length === 0 && (
+        h('div', {}, 'If you have a gamepad, press any button to detect it')
+      ),
       h('div', { style: { flexGrow: 1 } }),
       h('button', { type: 'submit' }, 'Add Player'),
     ]),

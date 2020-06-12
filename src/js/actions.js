@@ -9,10 +9,33 @@ const omit = (key, object) => {
   return nextObject;
 };
 
-export const GamepadsUpdate = (state, gamepads) => ({
-  ...state,
-  gamepads,
-});
+export const GamepadsUpdate = (state, gamepads) => {
+  const canUpdateKeybind = state.value == 'characterSelect'
+    && state.characterSelection.keybind === ''
+    && state.characterSelect.gamepadIndex === null;
+
+  const newGamepad = state.gamepads.find((gamepad, index) => (
+    (!gamepad || !gamepad.connected)
+    && (gamepads[index] && gamepads[index].connected)
+  ));
+
+  const willChangeCharacterSelection = canUpdateKeybind && newGamepad;
+
+  const characterSelection = willChangeCharacterSelection
+    ? { ...state.characterSelection, keybind: '', gamepadIndex: newGamepad.index }
+    : state.characterSelection;
+
+  return [
+    {
+      ...state,
+      gamepads,
+      characterSelection,
+    },
+    willChangeCharacterSelection && effects.RumbleGamepad({
+      gamepad: newGamepad,
+    }),
+  ];
+};
 
 export const SpriteSheetLoad = (state, {
   character,
@@ -74,22 +97,27 @@ export const CharacterSelectionSetKeybind = (state, { keybind, gamepadIndex }) =
   ...state,
   characterSelection: {
     ...state.characterSelection,
-    keybind,
-    gamepadIndex,
+    keybind: keybind || '',
+    gamepadIndex: typeof gamepadIndex === 'number' ? gamepadIndex : null,
   },
 });
+
+const debug = (...desc) => (value) => {
+  console.log(...desc, value);
+  return value;
+};
 
 export const CharacterSelectionAddLocalConnection = (state) => ({
   ...state,
   characterSelection: {
     color: randomColor(),
     name: '',
-    keybind: 'Arrows',
+    keybind: '',
     gamepadIndex: null,
   },
   connections: [
     ...state.connections,
-    {
+    debug('new connection')({
       type: 'local',
       id: Math.random().toString(36).slice(2),
       color: state.characterSelection.color,
@@ -98,7 +126,7 @@ export const CharacterSelectionAddLocalConnection = (state) => ({
       gamepadIndex: state.characterSelection.gamepadIndex,
       character: 'woodcutter',
       ready: false,
-    },
+    }),
   ],
 });
 
@@ -120,6 +148,11 @@ export const ConnectionReady = (state, { id }) => ({
       ? true
       : connection.ready,
   })),
+});
+
+export const ConnectionRemove = (state, { id }) => ({
+  ...state,
+  connections: state.connections.filter(c => c.id !== id),
 });
 
 export const StartCharacterSelect = (state) => ({

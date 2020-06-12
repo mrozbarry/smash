@@ -73,3 +73,11 @@ const PunchFX = (dispatch, {
   }
 };
 export const Punch = props => [PunchFX, props];
+
+const RumbleGamepadFX = (_dispatch, { gamepad }) => {
+  const actuators = Array.from(gamepad.hapticActuators || []);
+  for (const actuator of actuators) {
+    actuator.pulse();
+  }
+};
+export const RumbleGamepad = props => [RumbleGamepadFX, props];

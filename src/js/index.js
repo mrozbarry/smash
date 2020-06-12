@@ -55,7 +55,7 @@ const initialState = {
   characterSelection: {
     color: randomColor(),
     name: '',
-    keybind: 'Arrows',
+    keybind: '',
     gamepadIndex: null,
   },
   connections: [],
@@ -127,22 +127,28 @@ app({
         SetContext: actions.CanvasSetContext,
       }),
 
-      state.connections.map((connection) => (
-        connection.gamepadIndex >= 0
-          ? subscriptions.GamepadPlayer({
+      state.connections
+        .filter(c => typeof c.gamepadIndex === 'number')
+        .map((connection) => (
+          subscriptions.GamepadPlayer({
             ...connection,
             OnAdd: actions.PlayerAdd,
             OnRemove: actions.PlayerRemove,
             OnInputChange: actions.PlayerInputChange,
           })
-          : subscriptions.KeyboardPlayer({
+        )),
+
+      state.connections
+        .filter(c => c.keybind)
+        .map((connection) => (
+          subscriptions.KeyboardPlayer({
             ...connection,
             keybinds: state.keybinds[connection.keybind],
             OnAdd: actions.PlayerAdd,
             OnRemove: actions.PlayerRemove,
             OnInputChange: actions.PlayerInputChange,
           })
-      )),
+        )),
     ],
     subscriptions.GamepadConnections({
       OnGamepadsChange: actions.GamepadsUpdate,
