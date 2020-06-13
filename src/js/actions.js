@@ -102,11 +102,6 @@ export const CharacterSelectionSetKeybind = (state, { keybind, gamepadIndex }) =
   },
 });
 
-const debug = (...desc) => (value) => {
-  console.log(...desc, value);
-  return value;
-};
-
 export const CharacterSelectionAddLocalConnection = (state) => ({
   ...state,
   characterSelection: {
@@ -117,7 +112,7 @@ export const CharacterSelectionAddLocalConnection = (state) => ({
   },
   connections: [
     ...state.connections,
-    debug('new connection')({
+    {
       type: 'local',
       id: Math.random().toString(36).slice(2),
       color: state.characterSelection.color,
@@ -126,7 +121,7 @@ export const CharacterSelectionAddLocalConnection = (state) => ({
       gamepadIndex: state.characterSelection.gamepadIndex,
       character: 'woodcutter',
       ready: false,
-    }),
+    },
   ],
 });
 
