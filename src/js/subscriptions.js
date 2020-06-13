@@ -1,3 +1,5 @@
+import * as Peer from './lib/peer';
+
 const CanvasContextSub = (dispatch, {
   canvasQuerySelector,
   SetContext,
@@ -21,12 +23,7 @@ export const CanvasContext = props => [CanvasContextSub, props];
 
 const KeyboardPlayerSub = (dispatch, {
   id,
-  name,
-  color,
   keybinds,
-  character,
-  OnAdd,
-  OnRemove,
   OnInputChange,
 }) => {
   let state = {
@@ -87,18 +84,9 @@ const KeyboardPlayerSub = (dispatch, {
   parent.addEventListener('keyup', keyup);
   parent.addEventListener('keydown', keydown);
 
-  requestAnimationFrame(() => dispatch(OnAdd, {
-    id,
-    name,
-    color,
-    keybinds,
-    character,
-  }));
-
   return () => {
     parent.removeEventListener('keyup', keyup);
     parent.removeEventListener('keydown', keydown);
-    requestAnimationFrame(() => dispatch(OnRemove, { id }));
   };
 };
 export const KeyboardPlayer = props => [KeyboardPlayerSub, props];
@@ -233,3 +221,135 @@ const GamepadConnectionsFX = (dispatch, { OnGamepadsChange }) => {
   };
 };
 export const GamepadConnections = props => [GamepadConnectionsFX, props];
+
+const PeerHostFX = (dispatch, {
+  OnOpen,
+  ClientAdd,
+  ClientRemove,
+  ClientAddPlayer,
+  OnDone,
+}) => {
+  const peer = Peer.make(
+    Math.random()
+      .toString(36)
+      .slice(2, 6)
+      .toUpperCase(),
+  );
+  console.log('PeerHostFX', peer);
+
+  peer.on('open', () => {
+    console.log('Established connection to PeerJS server', peer.id);
+    dispatch(OnOpen, { peer });
+  });
+
+  peer.on('connection', (client) => {
+    console.log('Negotiating new connection');
+
+    client.on('open', () => {
+      console.log('Host.connection connected');
+      dispatch(ClientAdd, { client })
+    });
+
+    client.on('data', (data) => {
+      console.log('Host.connection data', client, data);
+      switch (data.type) {
+      case 'setPlayer':
+        return dispatch(ClientAddPlayer, {
+          player: data.player,
+        });
+
+      default:
+        console.log('Unknown type', data.type);
+      }
+    });
+
+    client.on('close', () => {
+      console.log('Host.connection close', client);
+      dispatch(ClientRemove, { client })
+    });
+
+    client.on('error', (error) => {
+      console.warn('Host.connection error', client, error);
+      client.close();
+      dispatch(ClientRemove, { client });
+    });
+  });
+
+  peer.on('disconnected', () => {
+    console.warn('PeerHostFX.disconnected', peer);
+  });
+
+  peer.on('error', (error) => {
+    console.warn('PeerHostFX.error', peer, error);
+  });
+
+  return () => {
+    console.log('PeerHostFX.cancel', peer);
+    peer.destroy();
+    requestAnimationFrame(() => dispatch(OnDone));
+  };
+};
+export const PeerHost = props => [PeerHostFX, props];
+
+const PeerClientFX = (dispatch, {
+  joinGameId,
+  OnOpen,
+  OnDone,
+  OnPlayersChange,
+  OnStartGame,
+}) => {
+  let peer = { destroy: () => {} };
+
+  const createPeer = () => {
+    console.log('Attempting to create a new client peer');
+
+    peer = Peer.make();
+    console.log('Establishing connection to peerjs');
+
+    peer.on('open', () => {
+      console.log('PeerClientFX.open', peer);
+      const dataConnection = peer.connect(Peer.id(joinGameId));
+
+      dataConnection.on('open', () => {
+        dispatch(OnOpen, {
+          peer,
+          dataConnection,
+        });
+        console.log('PeerClientFX.connect.open');
+      });
+
+      dataConnection.on('data', (data) => {
+        console.log('PeerClientFX.dataConnection.data', data);
+        if (data.players) {
+          dispatch(OnPlayersChange, {
+            players: data.players,
+          });
+        }
+        switch (data.type) {
+        case 'startGame':
+          return dispatch(OnStartGame);
+        }
+      });
+
+      dataConnection.on('error', (error) => {
+        console.warn('PeerClientFX.dataConnection.error', error);
+      });
+    });
+
+    peer.on('error', (error) => {
+      console.warn('PeerClientFX.peer.error', error);
+      peer.destroy();
+      peer = { destroy: () => {} };
+      setTimeout(createPeer, 500);
+    });
+  };
+
+  createPeer();
+
+  return () => {
+    console.log('PeerClientFX.cancel', peer);
+    peer.destroy();
+    requestAnimationFrame(() => dispatch(OnDone));
+  };
+};
+export const PeerClient = props => [PeerClientFX, props];

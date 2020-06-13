@@ -81,3 +81,22 @@ const RumbleGamepadFX = (_dispatch, { gamepad }) => {
   }
 };
 export const RumbleGamepad = props => [RumbleGamepadFX, props];
+
+
+const ClientMessageHostFX = (_dispatch, {
+  dataConnection,
+  payload,
+}) => {
+  dataConnection.send(payload);
+};
+export const ClientMessageHost = props => [ClientMessageHostFX, props];
+
+const HostMessageClientsFX = (_dispatch, {
+  clients,
+  payload,
+}) => {
+  for(const client of clients) {
+    client.send(payload);
+  }
+};
+export const HostMessageClients = props => [HostMessageClientsFX, props];

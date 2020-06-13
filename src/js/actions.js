@@ -4,9 +4,65 @@ import * as effects from './effects';
 import * as physics from './physics';
 import * as animation from './animation';
 
+import * as level from './levels/demo';
+
 const omit = (key, object) => {
   const { [key]: _discard, ...nextObject } = object;
   return nextObject;
+};
+
+const ArrowKeyBinds = {
+  'ArrowUp': 'jump',
+  'ArrowLeft': 'left',
+  'ArrowRight': 'right',
+  'Slash': 'punch',
+  // 'Period': 'kick',
+};
+
+const WasdKeyBinds = {
+  'KeyW': 'jump',
+  'KeyA': 'left',
+  'KeyD': 'right',
+  'KeyF': 'punch',
+  // 'KeyE': 'kick',
+};
+
+export const initialState = {
+  view: 'loading',
+  canvas: {
+    width: 1280,
+    height: 720,
+    context: null,
+  },
+  gamepads: [null, null, null, null],
+  spriteSheets: {},
+  players: {},
+  controls: {},
+  game: physics.world.make(
+    physics.vec.make(0, 25),
+    1 / 60,
+    level.geometry,
+  ),
+  keybinds: {
+    Arrows: ArrowKeyBinds,
+    WASD: WasdKeyBinds,
+  },
+  characterSelection: {
+    color: randomColor(),
+    name: '',
+    keybind: '',
+    gamepadIndex: null,
+  },
+  connections: [],
+  network: {
+    isInitialized: false,
+    isHost: false,
+    isReady: false,
+    joinGameId: '',
+    peer: null,
+    dataConnection: null,
+    clients: [],
+  },
 };
 
 export const GamepadsUpdate = (state, gamepads) => {
@@ -93,62 +149,156 @@ export const CharacterSelectionSetName = (state, { name }) => ({
   },
 });
 
-export const CharacterSelectionSetKeybind = (state, { keybind, gamepadIndex }) => ({
-  ...state,
-  characterSelection: {
-    ...state.characterSelection,
-    keybind: keybind || '',
-    gamepadIndex: typeof gamepadIndex === 'number' ? gamepadIndex : null,
-  },
-});
-
-export const CharacterSelectionAddLocalConnection = (state) => ({
-  ...state,
-  characterSelection: {
-    color: randomColor(),
-    name: '',
-    keybind: '',
-    gamepadIndex: null,
-  },
-  connections: [
-    ...state.connections,
-    {
-      type: 'local',
-      id: Math.random().toString(36).slice(2),
-      color: state.characterSelection.color,
-      name: state.characterSelection.name,
-      keybind: state.characterSelection.keybind,
-      gamepadIndex: state.characterSelection.gamepadIndex,
-      character: 'woodcutter',
-      ready: false,
+export const CharacterSelectionSetKeybind = (state, { value }) => {
+  const keybind = state.keybinds[value] ? value : '';
+  const gamepadIndex = state.gamepads.some(gp => gp && (gp.index == value)) ? value : null;
+  return ({
+    ...state,
+    characterSelection: {
+      ...state.characterSelection,
+      keybind,
+      gamepadIndex,
     },
-  ],
+  });
+};
+
+const _PlayerChange = (id, mutation, state) => {
+  const player = mutation(state.players[id]);
+  const players = {
+    ...state.players,
+    [id]: player,
+  };
+
+  if (!state.network.peer) {
+    return { ...state, players };
+  }
+
+  return [
+    {
+      ...state,
+      players,
+    },
+    state.network.isHost
+      ? effects.HostMessageClients({
+        clients: state.network.clients,
+        payload: {
+          players,
+        },
+      })
+      : effects.ClientMessageHost({
+        dataConnection: state.network.dataConnection,
+        payload: {
+          type: 'setPlayer',
+          player,
+        },
+      }),
+  ];
+}
+
+export const CharacterSelectionAddPlayer = (state, {
+  keybind,
+  gamepadIndex,
+  color,
+  name,
+}) => {
+  const id = Math.random().toString(36).slice(2);
+
+  const object = physics.dynamic.reset(
+    state.game,
+    physics.dynamic.make(
+      physics.vec.zero,
+      physics.vec.make(
+        90,
+        90,
+      ),
+    ),
+  );
+
+  const character = 'woodcutter';
+
+  const player = {
+    id,
+    ready: false,
+    name,
+    character,
+    isFacingRight: object.position.x < (state.canvas.width / 2),
+    punchCountdown: null,
+    inputs: {
+      horizontal: 0,
+      punch: 0,
+      jump: 0,
+    },
+    animation: {
+      type: 'idle',
+      millisecondsPerFrame: 250,
+      frame: 0,
+      time: 0,
+    },
+    targets: [],
+    deaths: 0,
+    color,
+    object,
+  };
+
+  const playerControls = {
+    id,
+    keybind,
+    gamepadIndex,
+  };
+
+  return _PlayerChange(id, () => player, {
+    ...state,
+    characterSelection: {
+      color: randomColor(),
+      name: '',
+      keybind: '',
+      gamepadIndex: null,
+    },
+    controls: {
+      ...state.controls,
+      [id]: playerControls,
+    },
+  });
+};
+
+export const PlayerChangeCharacter = (state, { id, character }) => {
+  return _PlayerChange(id, (player) => ({
+    ...player,
+    character,
+  }), state);
+};
+
+export const PlayerReady = (state, { id, ready }) => {
+  return _PlayerChange(id, (player) => ({
+    ...player,
+    ready,
+  }), state);
+};
+
+export const PlayersUpdateFromHost = (state, { players }) => ({
+  ...state,
+  players,
 });
 
-export const ConnectionChangeCharacter = (state, { id, character }) => ({
-  ...state,
-  connections: state.connections.map((connection) => ({
-    ...connection,
-    character: connection.id === id
-      ? character
-      : connection.character,
-  })),
-});
+export const HostClientAddPlayer = (state, { player }) => {
+  const players = {
+    ...state.players,
+    [player.id]: player,
+  };
 
-export const ConnectionReady = (state, { id }) => ({
-  ...state,
-  connections: state.connections.map((connection) => ({
-    ...connection,
-    ready: connection.id === id
-      ? true
-      : connection.ready,
-  })),
-});
-
-export const ConnectionRemove = (state, { id }) => ({
-  ...state,
-  connections: state.connections.filter(c => c.id !== id),
-});
+  return [
+    {
+      ...state,
+      players,
+    },
+    effects.HostMessageClients({
+      clients: state.network.clients,
+      payload: {
+        players,
+      },
+    }),
+  ];
+};
 
 export const StartCharacterSelect = (state) => ({
   ...state,
@@ -156,59 +306,27 @@ export const StartCharacterSelect = (state) => ({
 });
 
 
-export const StartLocalGame = (state) => [
-  {
-    ...state,
-    view: 'game',
-  },
-  effects.Declarativas({
-    state,
-    AfterRenderAction: Render,
-  }),
-];
-
-
-export const PlayerAdd = (state, { id, name, color, keybinds, character }) => {
-  const x = (state.canvas.width / 2) + ((Math.random() * 300) - 150);
-
-  const parent = state.spriteSheets[character];
-
-  return {
-    ...state,
-    players: {
-      ...state.players,
-      [id]: {
-        id,
-        name,
-        character,
-        isFacingRight: x < state.canvas.width / 2,
-        punchCountdown: null,
-        animation: animation.makeIdle(parent.idle),
-        keybinds,
-        inputs: {
-          horizontal: 0,
-          vertical: 0,
-          punch: 0,
-          kick: 0,
-          jump: 0,
-        },
-        targets: [],
-        deaths: 0,
-        color,
-        object: physics.dynamic.reset(
-          state.game,
-          physics.dynamic.make(
-            physics.vec.zero,
-            physics.vec.make(
-              90,
-              90,
-            ),
-          ),
-        ),
-      },
+export const StartGame = (state) => {
+  return [
+    {
+      ...state,
+      view: 'game',
     },
-  };
+    [
+      effects.Declarativas({
+        state,
+        AfterRenderAction: Render,
+      }),
+      effects.HostMessageClients({
+        clients: state.network.clients,
+        payload: {
+          type: 'startGame',
+        },
+      }),
+    ],
+  ];
 };
+
 
 export const PlayerRemove = (state, { id }) => ({
   ...state,
@@ -233,7 +351,7 @@ export const PlayerInputChange = (state, {
   value,
 }) => {
   const player = state.players[id];
-  const parent = state.spriteSheets[player.character];
+  // const parent = state.spriteSheets[player.character];
 
   const didPunch = inputKey === 'punch' && value > 0 && player.inputs.punch === 0;
   const targetIds = player.targets.map(t => t.id);
@@ -242,22 +360,22 @@ export const PlayerInputChange = (state, {
     ? effects.Punch({ sourceId: id, targetIds, OnPunch: PlayerGetPunched })
     : [];
 
-  let playerAnimation = player.animation;
-  let punchCountdown = player.punchCountdown;
-  if (didPunch) {
-    punchCountdown = 0.2;
-    playerAnimation = animation.makeAttack(
-      'attack1',
-      parent.attack1,
-      player.animation,
-    );
-  } else if (playerAnimation.name.startsWith('attack')) {
-    // Noop
-  } else if (inputKey === 'horizontal' && value === 0) {
-    playerAnimation = animation.makeIdle(parent.idle);
-  } else if (inputKey === 'horizontal' && value !== 0) {
-    playerAnimation = animation.makeRun(parent.run);
-  }
+  //let playerAnimation = player.animation;
+  //let punchCountdown = player.punchCountdown;
+  //if (didPunch) {
+    //punchCountdown = 0.2;
+    //playerAnimation = animation.makeAttack(
+      //'attack1',
+      //parent.attack1,
+      //player.animation,
+    //);
+  //} else if (playerAnimation.name.startsWith('attack')) {
+    //// Noop
+  //} else if (inputKey === 'horizontal' && value === 0) {
+    //playerAnimation = animation.makeIdle(parent.idle);
+  //} else if (inputKey === 'horizontal' && value !== 0) {
+    //playerAnimation = animation.makeRun(parent.run);
+  //}
 
   return [
     {
@@ -266,11 +384,11 @@ export const PlayerInputChange = (state, {
         ...state.players,
         [id]: {
           ...player,
-          punchCountdown: player.animation.name.startsWith('attack') ? player.punchCountdown : punchCountdown,
+          punchCountdown: player.punchCountdown > 0 ? player.punchCountdown : 0,
           isFacingRight: inputKey === 'horizontal' && value !== 0
             ? value > 0
             : player.isFacingRight,
-          animation: playerAnimation,
+          // animation: playerAnimation,
           inputs: {
             ...state.players[id].inputs,
             [inputKey]: value,
@@ -375,25 +493,98 @@ export const Render = (state) => {
     ...nextPlayers,
     [p.id]: {
       ...p,
-      animation: animation.step(delta, p, p.animation),
+      // animation: animation.step(delta, p, p.animation),
       deaths: idsToKill.includes(p.id) ? p.deaths + 1 : p.deaths,
       object: idsToKill.includes(p.id) ? physics.dynamic.reset(state.game, p.object) : p.object,
     },
   }), {});
 
+  const nextState = {
+    ...state,
+    game: {
+      ...game,
+      lastFrameTime: now,
+    },
+    players,
+  };
 
   return [
-    {
-      ...state,
-      game: {
-        ...game,
-        lastFrameTime: now,
-      },
-      players,
-    },
-    effects.Declarativas({
-      state,
-      AfterRenderAction: Render,
-    }),
+    nextState,
+    [
+      effects.Declarativas({
+        state,
+        AfterRenderAction: Render,
+      }),
+      effects.HostMessageClients({
+        clients: state.network.clients,
+        players: nextState.players,
+      }),
+    ]
   ]
 };
+
+export const NetworkInitialize = (state, { joinGameId: joinGameIdInit }) => {
+  const joinGameId = (joinGameIdInit || '').toUpperCase();
+  const isHost = !joinGameIdInit;
+
+  return {
+    ...state,
+    network: {
+      ...state.network,
+      isInitialized: true,
+      isHost,
+      isReady: false,
+      joinGameId,
+      peer: null,
+    },
+  };
+};
+
+export const NetworkSetHostPeer = (state, { peer }) => ({
+  ...state,
+  network: {
+    ...state.network,
+    peer,
+    isReady: true,
+  },
+  view: 'characterSelect',
+});
+
+export const NetworkSetClientPeer = (state, { peer, dataConnection }) => ({
+  ...state,
+  network: {
+    ...state.network,
+    peer,
+    dataConnection,
+    isReady: true,
+  },
+  view: 'characterSelect',
+});
+
+export const NetworkUnsetPeer = (state) => ({
+  ...state,
+  network: {
+    ...state.network,
+    isInitialized: false,
+    isReady: false,
+    joinGameId: '',
+    peer: null,
+    dataConnection: null,
+  },
+});
+
+export const NetworkClientAdd = (state, { client }) => ({
+  ...state,
+  network: {
+    ...state.network,
+    clients: state.network.clients.concat(client),
+  },
+});
+
+export const NetworkClientRemove = (state, { client }) => ({
+  ...state,
+  network: {
+    ...state.network,
+    clients: state.network.clients.concat(client),
+  },
+});

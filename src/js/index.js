@@ -1,13 +1,8 @@
 import { app, h } from 'hyperapp';
 
-import randomColor from 'randomcolor';
-
 import * as actions from './actions';
 import * as effects from './effects';
 import * as subscriptions from './subscriptions';
-import * as physics from './physics';
-
-import * as level from './levels/demo';
 
 import { loading as loadingView } from './views/loading';
 import { characterSelect as characterSelectView } from './views/characterSelect';
@@ -16,50 +11,6 @@ import { game as gameView } from './views/game';
 import * as assetWoodCutter from '../sprites/craftpix-891178-free-3-character-sprite-sheets-pixel-art/1 Woodcutter/*.png';
 import * as assetGraveRobber from '../sprites/craftpix-891178-free-3-character-sprite-sheets-pixel-art/2 GraveRobber/*.png';
 import * as assetSteamMan from '../sprites/craftpix-891178-free-3-character-sprite-sheets-pixel-art/3 SteamMan/*.png';
-
-const ArrowKeyBinds = {
-  'ArrowUp': 'jump',
-  'ArrowLeft': 'left',
-  'ArrowRight': 'right',
-  'Slash': 'punch',
-  // 'Period': 'kick',
-};
-
-const WasdKeyBinds = {
-  'KeyW': 'jump',
-  'KeyA': 'left',
-  'KeyD': 'right',
-  'KeyF': 'punch',
-  // 'KeyE': 'kick',
-};
-
-const initialState = {
-  view: 'loading',
-  canvas: {
-    width: 1280,
-    height: 720,
-    context: null,
-  },
-  gamepads: [null, null, null, null],
-  spriteSheets: {},
-  players: {},
-  game: physics.world.make(
-    physics.vec.make(0, 25),
-    1 / 60,
-    level.geometry,
-  ),
-  keybinds: {
-    Arrows: ArrowKeyBinds,
-    WASD: WasdKeyBinds,
-  },
-  characterSelection: {
-    color: randomColor(),
-    name: '',
-    keybind: '',
-    gamepadIndex: null,
-  },
-  connections: [],
-};
 
 const viewScene = (state) => {
   switch (state.view) {
@@ -90,7 +41,7 @@ const viewScene = (state) => {
 
 app({
   init: [
-    initialState,
+    actions.initialState,
     [
       ...effects.LoadSpritesForCharacter({
         character: 'Woodcutter',
@@ -120,40 +71,60 @@ app({
     h(viewScene, state),
   ]),
 
-  subscriptions: (state) => [
-    state.view === 'game' && [
-      subscriptions.CanvasContext({
-        canvasQuerySelector: '#canvas',
-        SetContext: actions.CanvasSetContext,
+  subscriptions: (state) => {
+    const controls = Object.values(state.controls);
+
+    return [
+      state.view === 'game' && [
+        subscriptions.CanvasContext({
+          canvasQuerySelector: '#canvas',
+          SetContext: actions.CanvasSetContext,
+        }),
+
+        controls
+          .filter(c => typeof c.gamepadIndex === 'number')
+          .map((props) => (
+            subscriptions.GamepadPlayer({
+              ...props,
+              OnInputChange: actions.PlayerInputChange,
+            })
+          )),
+
+        controls
+          .filter(c => c.keybind)
+          .map((props) => (
+            subscriptions.KeyboardPlayer({
+              ...props,
+              keybinds: state.keybinds[props.keybind],
+              OnInputChange: actions.PlayerInputChange,
+            })
+          )),
+      ],
+      subscriptions.GamepadConnections({
+        OnGamepadsChange: actions.GamepadsUpdate,
       }),
-
-      state.connections
-        .filter(c => typeof c.gamepadIndex === 'number')
-        .map((connection) => (
-          subscriptions.GamepadPlayer({
-            ...connection,
-            OnAdd: actions.PlayerAdd,
-            OnRemove: actions.PlayerRemove,
-            OnInputChange: actions.PlayerInputChange,
-          })
-        )),
-
-      state.connections
-        .filter(c => c.keybind)
-        .map((connection) => (
-          subscriptions.KeyboardPlayer({
-            ...connection,
-            keybinds: state.keybinds[connection.keybind],
-            OnAdd: actions.PlayerAdd,
-            OnRemove: actions.PlayerRemove,
-            OnInputChange: actions.PlayerInputChange,
-          })
-        )),
-    ],
-    subscriptions.GamepadConnections({
-      OnGamepadsChange: actions.GamepadsUpdate,
-    }),
-  ],
+      state.network.isInitialized && [
+        state.network.isHost && [
+          subscriptions.PeerHost({
+            OnOpen: actions.NetworkSetHostPeer,
+            ClientAdd: actions.NetworkClientAdd,
+            ClientRemove: actions.NetworkClientRemove,
+            OnDone: actions.NetworkUnsetPeer,
+            ClientAddPlayer: actions.HostClientAddPlayer,
+          }),
+        ],
+        !state.network.isHost && [
+          state.network.joinGameId && subscriptions.PeerClient({
+            joinGameId: state.network.joinGameId,
+            OnOpen: actions.NetworkSetClientPeer,
+            OnDone: actions.NetworkUnsetPeer,
+            OnPlayersChange: actions.PlayersUpdateFromHost,
+            OnStartGame: actions.StartGame,
+          }),
+        ],
+      ],
+    ];
+  },
 
   node: document.querySelector('#app'),
 });
