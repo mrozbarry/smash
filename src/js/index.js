@@ -75,6 +75,26 @@ app({
     const controls = Object.values(state.controls);
 
     return [
+      state.network.isInitialized && state.network.isHost && [
+        subscriptions.PeerHost({
+          OnOpen: actions.NetworkSetHostPeer,
+          ClientAdd: actions.NetworkClientAdd,
+          ClientRemove: actions.NetworkClientRemove,
+          OnDone: actions.NetworkUnsetPeer,
+          ClientAddPlayer: actions.HostClientAddPlayer,
+        }),
+      ],
+
+      state.network.isInitialized && !state.network.isHost && [
+        state.network.joinGameId && subscriptions.PeerClient({
+          joinGameId: state.network.joinGameId,
+          OnOpen: actions.NetworkSetClientPeer,
+          OnDone: actions.NetworkUnsetPeer,
+          OnPlayersChange: actions.PlayersUpdateFromHost,
+          OnStartGame: actions.StartGame,
+        }),
+      ],
+
       state.view === 'game' && [
         subscriptions.CanvasContext({
           canvasQuerySelector: '#canvas',
@@ -100,28 +120,11 @@ app({
             })
           )),
       ],
-      subscriptions.GamepadConnections({
-        OnGamepadsChange: actions.GamepadsUpdate,
-      }),
-      state.network.isInitialized && [
-        state.network.isHost && [
-          subscriptions.PeerHost({
-            OnOpen: actions.NetworkSetHostPeer,
-            ClientAdd: actions.NetworkClientAdd,
-            ClientRemove: actions.NetworkClientRemove,
-            OnDone: actions.NetworkUnsetPeer,
-            ClientAddPlayer: actions.HostClientAddPlayer,
-          }),
-        ],
-        !state.network.isHost && [
-          state.network.joinGameId && subscriptions.PeerClient({
-            joinGameId: state.network.joinGameId,
-            OnOpen: actions.NetworkSetClientPeer,
-            OnDone: actions.NetworkUnsetPeer,
-            OnPlayersChange: actions.PlayersUpdateFromHost,
-            OnStartGame: actions.StartGame,
-          }),
-        ],
+
+      state.view === 'characterSelect' && [
+        subscriptions.GamepadConnections({
+          OnGamepadsChange: actions.GamepadsUpdate,
+        }),
       ],
     ];
   },

@@ -87,7 +87,9 @@ const ClientMessageHostFX = (_dispatch, {
   dataConnection,
   payload,
 }) => {
-  dataConnection.send(payload);
+  if (dataConnection) {
+    dataConnection.send(payload);
+  }
 };
 export const ClientMessageHost = props => [ClientMessageHostFX, props];
 

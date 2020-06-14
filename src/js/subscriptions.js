@@ -325,6 +325,7 @@ const PeerClientFX = (dispatch, {
             players: data.players,
           });
         }
+
         switch (data.type) {
         case 'startGame':
           return dispatch(OnStartGame);

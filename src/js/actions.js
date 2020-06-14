@@ -53,7 +53,6 @@ export const initialState = {
     keybind: '',
     gamepadIndex: null,
   },
-  connections: [],
   network: {
     isInitialized: false,
     isHost: false,
@@ -327,7 +326,6 @@ export const StartGame = (state) => {
   ];
 };
 
-
 export const PlayerRemove = (state, { id }) => ({
   ...state,
   players: omit(id, state.players),
@@ -350,53 +348,50 @@ export const PlayerInputChange = (state, {
   inputKey,
   value,
 }) => {
-  const player = state.players[id];
-  // const parent = state.spriteSheets[player.character];
+  const prevPlayer = state.players[id];
 
-  const didPunch = inputKey === 'punch' && value > 0 && player.inputs.punch === 0;
-  const targetIds = player.targets.map(t => t.id);
+  const didPunch = inputKey === 'punch' && value > 0 && prevPlayer.inputs.punch === 0;
+  const targetIds = prevPlayer.targets.map(t => t.id);
+
+  const player = {
+    ...prevPlayer,
+    punchCountdown: prevPlayer.punchCountdown > 0
+      ? prevPlayer.punchCountdown
+      : 0,
+    isFacingRight: inputKey === 'horizontal' && value !== 0
+      ? value > 0
+      : prevPlayer.isFacingRight,
+    // animation: playerAnimation,
+    inputs: {
+      ...state.players[id].inputs,
+      [inputKey]: value,
+    },
+  };
 
   const punchEffects = didPunch
     ? effects.Punch({ sourceId: id, targetIds, OnPunch: PlayerGetPunched })
     : [];
-
-  //let playerAnimation = player.animation;
-  //let punchCountdown = player.punchCountdown;
-  //if (didPunch) {
-    //punchCountdown = 0.2;
-    //playerAnimation = animation.makeAttack(
-      //'attack1',
-      //parent.attack1,
-      //player.animation,
-    //);
-  //} else if (playerAnimation.name.startsWith('attack')) {
-    //// Noop
-  //} else if (inputKey === 'horizontal' && value === 0) {
-    //playerAnimation = animation.makeIdle(parent.idle);
-  //} else if (inputKey === 'horizontal' && value !== 0) {
-    //playerAnimation = animation.makeRun(parent.run);
-  //}
 
   return [
     {
       ...state,
       players: {
         ...state.players,
-        [id]: {
-          ...player,
-          punchCountdown: player.punchCountdown > 0 ? player.punchCountdown : 0,
-          isFacingRight: inputKey === 'horizontal' && value !== 0
-            ? value > 0
-            : player.isFacingRight,
-          // animation: playerAnimation,
-          inputs: {
-            ...state.players[id].inputs,
-            [inputKey]: value,
-          },
-        },
+        [id]: player,
       },
     },
-    punchEffects,
+    [
+      punchEffects,
+      !state.network.isHost && (
+        effects.ClientMessageHost({
+          dataConnection: state.network.dataConnection,
+          payload: {
+            type: 'setPlayer',
+            player,
+          },
+        })
+      ),
+    ],
   ];
 };
 
@@ -512,14 +507,16 @@ export const Render = (state) => {
     nextState,
     [
       effects.Declarativas({
-        state,
+        state: nextState,
         AfterRenderAction: Render,
       }),
       effects.HostMessageClients({
         clients: state.network.clients,
-        players: nextState.players,
+        payload: {
+          players,
+        },
       }),
-    ]
+    ],
   ]
 };
 
@@ -573,13 +570,21 @@ export const NetworkUnsetPeer = (state) => ({
   },
 });
 
-export const NetworkClientAdd = (state, { client }) => ({
-  ...state,
-  network: {
-    ...state.network,
-    clients: state.network.clients.concat(client),
+export const NetworkClientAdd = (state, { client }) => [
+  {
+    ...state,
+    network: {
+      ...state.network,
+      clients: state.network.clients.concat(client),
+    },
   },
-});
+  effects.HostMessageClients({
+    clients: [client],
+    payload: {
+      players: state.players,
+    },
+  }),
+];
 
 export const NetworkClientRemove = (state, { client }) => ({
   ...state,
