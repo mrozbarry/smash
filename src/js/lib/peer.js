@@ -9,8 +9,8 @@ const options = (secure = false) => ({
 });
 
 export const make = (peerId) => peerId
-  ? new Peer(id(peerId), options())
-  : new Peer(options());
+  ? new Peer(id(peerId), options(true))
+  : new Peer(options(true));
 
 export const id = id => `com-github-mrozbarry-${id}-smash`;
 export const simplifyId = id => id
