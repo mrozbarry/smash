@@ -334,7 +334,7 @@ const PeerClientFX = (dispatch, {
 
         switch (data.type) {
         case 'startGame':
-          return dispatch(OnStartGame);
+          return dispatch(OnStartGame, { isClient: true });
         }
       });
 

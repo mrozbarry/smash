@@ -168,7 +168,7 @@ export const characterSelect = ({ state, characters }) => {
         }, Peer.simplifyId(state.network.peer.id)),
       ]),
       showStartButton && h('button', {
-        onclick: actions.StartGame,
+        onclick: [actions.StartGame, {}],
         disabled: (
           Object.values(state.players).length === 0
           || Object.values(state.players).some(c => !c.ready)

@@ -303,7 +303,7 @@ export const StartCharacterSelect = (state) => ({
 });
 
 
-export const StartGame = (state) => {
+export const StartGame = (state, { isClient }) => {
   return [
     {
       ...state,
@@ -312,7 +312,7 @@ export const StartGame = (state) => {
     [
       effects.Declarativas({
         state,
-        AfterRenderAction: Render,
+        AfterRenderAction: isClient ? RenderClient : Render,
       }),
       effects.HostMessageClients({
         clients: state.network.clients,
