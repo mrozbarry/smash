@@ -20,21 +20,20 @@ export const player = (props) => {
       x: props.object.position.x - (props.object.size.x / 2),
       y: props.object.position.y - props.object.size.y,
     }, [
-      c('fillStyle', { value: props.color }),
-      c('fillRect', rect),
-      //c(mirror, { horizontal: !props.isFacingRight }, [
-        //!props.isFacingRight && c('translate', { x: rect.width / -2, y: 0 }),
-        //c('drawImage', {
-          //image: props.animation.spriteSheet.image,
-          //source: {
-            //x: x,
-            //y: 0,
-            //width: props.animation.spriteSheet.size,
-            //height: props.animation.spriteSheet.size,
-          //},
-          //destination: rect,
-        //}),
-      //]),
+      c(mirror, { horizontal: !props.object.isFacingRight }, [
+        !props.object.isFacingRight && c('translate', { x: rect.width / -1.5, y: 0 }),
+        c('drawImage', {
+          // image: props.animation.spriteSheet.image,
+          image: props.spriteSheet[props.animation.name].image,
+          source: {
+            x: x,
+            y: 0,
+            width: props.spriteSheet.idle.size - 1,
+            height: props.spriteSheet.idle.size,
+          },
+          destination: rect,
+        }),
+      ]),
     ]),
     c(equalateralTriangle, {
       start: vec.add(

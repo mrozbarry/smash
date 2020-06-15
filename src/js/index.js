@@ -82,6 +82,7 @@ app({
           ClientRemove: actions.NetworkClientRemove,
           OnDone: actions.NetworkUnsetPeer,
           ClientAddPlayer: actions.HostClientAddPlayer,
+          ClientSetPlayerInputs: actions.PlayerInputChange,
         }),
       ],
 

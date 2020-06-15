@@ -227,6 +227,7 @@ const PeerHostFX = (dispatch, {
   ClientAdd,
   ClientRemove,
   ClientAddPlayer,
+  ClientSetPlayerInputs,
   OnDone,
 }) => {
   const peer = Peer.make(
@@ -251,11 +252,17 @@ const PeerHostFX = (dispatch, {
     });
 
     client.on('data', (data) => {
-      console.log('Host.connection data', client, data);
       switch (data.type) {
       case 'setPlayer':
         return dispatch(ClientAddPlayer, {
           player: data.player,
+        });
+
+      case 'setInput':
+        return dispatch(ClientSetPlayerInputs, {
+          id: data.id,
+          inputKey: data.inputKey,
+          value: data.value,
         });
 
       default:
@@ -319,7 +326,6 @@ const PeerClientFX = (dispatch, {
       });
 
       dataConnection.on('data', (data) => {
-        console.log('PeerClientFX.dataConnection.data', data);
         if (data.players) {
           dispatch(OnPlayersChange, {
             players: data.players,

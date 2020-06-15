@@ -220,19 +220,17 @@ export const CharacterSelectionAddPlayer = (state, {
     ready: false,
     name,
     character,
-    isFacingRight: object.position.x < (state.canvas.width / 2),
     punchCountdown: null,
     inputs: {
       horizontal: 0,
       punch: 0,
       jump: 0,
     },
-    animation: {
-      type: 'idle',
-      millisecondsPerFrame: 250,
-      frame: 0,
-      time: 0,
-    },
+    animation: animation.make(
+      'idle',
+      state.spriteSheets[character].idle.frames,
+      0.25,
+    ),
     targets: [],
     deaths: 0,
     color,
@@ -358,10 +356,6 @@ export const PlayerInputChange = (state, {
     punchCountdown: prevPlayer.punchCountdown > 0
       ? prevPlayer.punchCountdown
       : 0,
-    isFacingRight: inputKey === 'horizontal' && value !== 0
-      ? value > 0
-      : prevPlayer.isFacingRight,
-    // animation: playerAnimation,
     inputs: {
       ...state.players[id].inputs,
       [inputKey]: value,
@@ -386,8 +380,10 @@ export const PlayerInputChange = (state, {
         effects.ClientMessageHost({
           dataConnection: state.network.dataConnection,
           payload: {
-            type: 'setPlayer',
-            player,
+            type: 'setInput',
+            id,
+            inputKey,
+            value,
           },
         })
       ),
@@ -400,7 +396,7 @@ export const PlayerGetPunched = (state, { id, sourceId }) => {
   const sourcePlayer = state.players[sourceId];
   const force = physics.vec.add(
     physics.vec.make(
-      sourcePlayer.object.punch.x * (sourcePlayer.isFacingRight ? 1 : -1),
+      sourcePlayer.object.punch.x * (sourcePlayer.object.isFacingRight ? 1 : -1),
       sourcePlayer.object.punch.y,
     ),
     sourcePlayer.object.speed,
@@ -450,7 +446,6 @@ export const Render = (state) => {
       const object = physics.dynamic.step(
         state.game,
         ground,
-        player.isFacingRight,
         player.object,
       );
 
@@ -462,14 +457,39 @@ export const Render = (state) => {
           p.id !== player.id
           && Math.abs(p.object.position.y - player.object.position.y) <= ((p.object.size.y + player.object.size.y) / 4)
           && (
-            player.isFacingRight
+            object.isFacingRight
               ? (p.object.position.x > (player.object.position.x - targetDisanceBackward) && p.object.position.x < (player.object.position.x + targetDistanceForward))
               : (p.object.position.x < (player.object.position.x + targetDisanceBackward) && p.object.position.x > (player.object.position.x - targetDistanceForward))
           )
         ));
 
+      let playerAnimation = animation.step(
+        state.game.timestep,
+        player.animation,
+      );
+      if (playerAnimation.name !== 'idle' && player.inputs.horizontal === 0) {
+        playerAnimation = animation.make(
+          'idle',
+          state.spriteSheets[player.character].idle.frames,
+          0.25,
+        );
+      } else if (player.inputs.horizontal !== 0) {
+        playerAnimation = animation.make(
+          'run',
+          state.spriteSheets[player.character].run.frames,
+          Math.max(0.1, 1 - (Math.abs(object.speed.x) / 2)),
+          playerAnimation.name === 'run'
+            ? playerAnimation.frame
+            : 0,
+          playerAnimation.name === 'run'
+            ? playerAnimation.time
+            : 0,
+        );
+      }
+
       return {
         ...player,
+        animation: playerAnimation,
         targets,
         object,
       };
@@ -519,6 +539,15 @@ export const Render = (state) => {
     ],
   ]
 };
+
+export const RenderClient = (state) => [
+  state,
+  effects.Declarativas({
+    state,
+    AfterRenderAction: RenderClient,
+  }),
+];
+
 
 export const NetworkInitialize = (state, { joinGameId: joinGameIdInit }) => {
   const joinGameId = (joinGameIdInit || '').toUpperCase();

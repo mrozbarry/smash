@@ -12,6 +12,7 @@ export const make = (position, size) => ({
   force: vec.zero,
   isOnGround: false,
   isJumping: false,
+  isFacingRight: true,
   size,
   walkSpeed: 0.8,
   jumpSpeed: -9,
@@ -23,12 +24,14 @@ export const make = (position, size) => ({
 
 export const reset = (world, object) => {
   const geo = world.geometry[Math.floor(Math.random() * world.geometry.length)];
+  const x = geo.x + (geo.width / 2);
   return {
     ...object,
+    isFacingRight: (Math.random() * 10) > 5,
     isOnGround: false,
     isJumping: false,
     position: vec.make(
-      geo.x + (geo.width / 2),
+      x,
       100,
     ),
     speed: vec.zero,
@@ -41,6 +44,9 @@ export const applyInputs = (inputs, object) => {
   return {
     ...object,
     isJumping,
+    isFacingRight: inputs.horizontal !== 0
+      ? inputs.horizontal > 0
+      : object.isFacingRight,
     speed: vec.add(
       vec.multiply(
         (inputs.punch === 0 ? 1 : 0),
@@ -54,7 +60,7 @@ export const applyInputs = (inputs, object) => {
   };
 };
 
-export const step = (world, ground, isFacingRight, object) => {
+export const step = (world, ground, object) => {
   const speed = vec.add(
     object.speed,
     vec.multiply(
@@ -96,7 +102,7 @@ export const step = (world, ground, isFacingRight, object) => {
 
   const boundingBox = rect.make(
     vec.make(
-      object.position.x - (object.size.x / 2) - (isFacingRight ? 0 : (object.size.x / 4)),
+      object.position.x - (object.size.x / 2) - (object.isFacingRight ? 0 : (object.size.x / 4)),
       object.position.y - (object.size.y / 1.15),
     ),
     vec.make(

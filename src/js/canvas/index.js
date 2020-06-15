@@ -30,7 +30,7 @@ export const view = (state) => c(revertableState, {}, [
     player,
     {
       ...playerData,
-      spriteSheets: state.spriteSheets,
+      spriteSheet: state.spriteSheets[playerData.character],
       game: state.game,
     },
   )),
