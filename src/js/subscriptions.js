@@ -315,7 +315,10 @@ const PeerClientFX = (dispatch, {
 
     peer.on('open', () => {
       console.log('PeerClientFX.open', peer);
-      const dataConnection = peer.connect(Peer.id(joinGameId));
+      const dataConnection = peer.connect(Peer.id(joinGameId), {
+        serialization: 'json',
+        reliable: false,
+      });
 
       dataConnection.on('open', () => {
         dispatch(OnOpen, {
