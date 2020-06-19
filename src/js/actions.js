@@ -213,6 +213,7 @@ export const CharacterSelectionAddPlayer = (state, {
   const player = {
     id,
     ready: false,
+    active: false,
     name,
     character,
     punchCountdown: null,

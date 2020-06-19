@@ -46,10 +46,12 @@ const LoadSpriteSheetFx = (dispatch, {
 
   image.src = uri;
 
-  dispatch(OnLoad, {
-    character,
-    type,
-    size,
+  requestAnimationFrame(() => {
+    dispatch(OnLoad, {
+      character,
+      type,
+      size,
+    });
   });
 };
 export const LoadSpriteSheet = props => [LoadSpriteSheetFx, props];
@@ -72,9 +74,11 @@ const PunchFX = (dispatch, {
   targetIds,
   OnPunch,
 }) => {
-  for(const id of targetIds) {
-    dispatch(OnPunch, { id, sourceId }); 
-  }
+  requestAnimationFrame(() => {
+    for(const id of targetIds) {
+      dispatch(OnPunch, { id, sourceId }); 
+    }
+  });
 };
 export const Punch = props => [PunchFX, props];
 
@@ -125,9 +129,11 @@ const ClientMessageHostFX = (_dispatch, {
   dataConnection,
   payload,
 }) => {
-  if (dataConnection) {
-    dataConnection.send(payload);
-  }
+  requestAnimationFrame(() => {
+    if (dataConnection) {
+      dataConnection.send(payload);
+    }
+  });
 };
 export const ClientMessageHost = props => [ClientMessageHostFX, props];
 
@@ -135,8 +141,10 @@ const MessageConnectionsFX = (_dispatch, {
   connections,
   payload,
 }) => {
-  for(const connection of connections) {
-    connection.client.send(payload);
-  }
+  requestAnimationFrame(() => {
+    for(const connection of connections) {
+      connection.client.send(payload);
+    }
+  });
 };
 export const MessageConnections = props => [MessageConnectionsFX, props];
