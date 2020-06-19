@@ -6,6 +6,8 @@ import * as animation from './animation';
 
 import * as level from './levels/demo';
 
+import * as Peer from './lib/peer';
+
 const omit = (key, object) => {
   const { [key]: _discard, ...nextObject } = object;
   return nextObject;
@@ -54,13 +56,13 @@ export const initialState = {
     gamepadIndex: null,
   },
   network: {
+    id: null,
     isInitialized: false,
     isHost: false,
     isReady: false,
     joinGameId: '',
     peer: null,
-    dataConnection: null,
-    clients: [],
+    connections: [],
   },
 };
 
@@ -177,20 +179,13 @@ const _PlayerChange = (id, mutation, state) => {
       ...state,
       players,
     },
-    state.network.isHost
-      ? effects.HostMessageClients({
-        clients: state.network.clients,
-        payload: {
-          players,
-        },
-      })
-      : effects.ClientMessageHost({
-        dataConnection: state.network.dataConnection,
-        payload: {
-          type: 'setPlayer',
-          player,
-        },
-      }),
+    effects.MessageConnections({
+      connections: state.network.connections,
+      payload: {
+        type: 'setPlayer',
+        player,
+      },
+    }),
   ];
 }
 
@@ -288,10 +283,11 @@ export const HostClientAddPlayer = (state, { player }) => {
       ...state,
       players,
     },
-    effects.HostMessageClients({
-      clients: state.network.clients,
+    effects.MessageConnections({
+      connections: state.network.connections,
       payload: {
-        players,
+        type: 'setPlayer',
+        player,
       },
     }),
   ];
@@ -303,7 +299,7 @@ export const StartCharacterSelect = (state) => ({
 });
 
 
-export const StartGame = (state, { isClient }) => {
+export const StartGame = (state) => {
   return [
     {
       ...state,
@@ -312,10 +308,10 @@ export const StartGame = (state, { isClient }) => {
     [
       effects.Declarativas({
         state,
-        AfterRenderAction: isClient ? RenderClient : Render,
+        AfterRenderAction: Render,
       }),
-      effects.HostMessageClients({
-        clients: state.network.clients,
+      effects.MessageConnections({
+        connections: state.network.connections,
         payload: {
           type: 'startGame',
         },
@@ -523,6 +519,11 @@ export const Render = (state) => {
     players,
   };
 
+  const localPlayers = Object.keys(state.controls).reduce((lp, id) => ({
+    ...lp,
+    [id]: players[id],
+  }), {});
+
   return [
     nextState,
     [
@@ -530,51 +531,54 @@ export const Render = (state) => {
         state: nextState,
         AfterRenderAction: Render,
       }),
-      effects.HostMessageClients({
-        clients: state.network.clients,
+      effects.MessageConnections({
+        connections: state.network.connections,
         payload: {
-          players,
+          players: localPlayers,
         },
       }),
     ],
   ]
 };
 
-export const RenderClient = (state) => [
-  state,
-  effects.Declarativas({
-    state,
-    AfterRenderAction: RenderClient,
-  }),
-];
+export const NetworkInitialize = (state, {
+  joinGameId,
+}) => {
+  const id = Math.random().toString(36).slice(2);
 
+  return [
+    {
+      ...state,
+      network: {
+        ...state.network,
+        id,
+        joinGameId,
+        peer: null,
+        connections: [],
+      },
+    },
+    effects.NetworkCreatePeer({
+      id,
+      AfterCreate: NetworkSetHostPeer,
+    }),
+  ];
+};
 
-export const NetworkInitialize = (state, { joinGameId: joinGameIdInit }) => {
-  const joinGameId = (joinGameIdInit || '').toUpperCase();
-  const isHost = !joinGameIdInit;
-
-  return {
+export const NetworkSetHostPeer = (state, { peer }) => [
+  {
     ...state,
     network: {
       ...state.network,
-      isInitialized: true,
-      isHost,
-      isReady: false,
-      joinGameId,
-      peer: null,
+      peer,
     },
-  };
-};
-
-export const NetworkSetHostPeer = (state, { peer }) => ({
-  ...state,
-  network: {
-    ...state.network,
-    peer,
-    isReady: true,
+    view: 'characterSelect',
   },
-  view: 'characterSelect',
-});
+  effects.NetworkConnectPeer({
+    peer,
+    joinGameId: state.network.joinGameId,
+    OnAddConnection: NetworkClientAdd,
+  }),
+];
 
 export const NetworkSetClientPeer = (state, { peer, dataConnection }) => ({
   ...state,
@@ -604,15 +608,18 @@ export const NetworkClientAdd = (state, { client }) => [
     ...state,
     network: {
       ...state.network,
-      clients: state.network.clients.concat(client),
+      connections: state.network.connections.concat({
+        id: Peer.simplifyId(client.peer),
+        client,
+      }),
     },
   },
-  effects.HostMessageClients({
-    clients: [client],
-    payload: {
-      players: state.players,
-    },
-  }),
+  //effects.MessageConnections({
+    //clients: [client],
+    //payload: {
+      //players: state.players,
+    //},
+  //}),
 ];
 
 export const NetworkClientRemove = (state, { client }) => ({

@@ -75,25 +75,21 @@ app({
     const controls = Object.values(state.controls);
 
     return [
-      state.network.isInitialized && state.network.isHost && [
-        subscriptions.PeerHost({
-          OnOpen: actions.NetworkSetHostPeer,
+      state.network.peer && [
+        subscriptions.PeerHandler({
+          peer: state.network.peer,
           ClientAdd: actions.NetworkClientAdd,
-          ClientRemove: actions.NetworkClientRemove,
           OnDone: actions.NetworkUnsetPeer,
-          ClientAddPlayer: actions.HostClientAddPlayer,
-          ClientSetPlayerInputs: actions.PlayerInputChange,
         }),
-      ],
 
-      state.network.isInitialized && !state.network.isHost && [
-        state.network.joinGameId && subscriptions.PeerClient({
-          joinGameId: state.network.joinGameId,
-          OnOpen: actions.NetworkSetClientPeer,
-          OnDone: actions.NetworkUnsetPeer,
-          OnPlayersChange: actions.PlayersUpdateFromHost,
-          OnStartGame: actions.StartGame,
-        }),
+        ...state.network.connections.map((connection) => (
+          subscriptions.PeerConnection({
+            connection,
+            ClientRemove: actions.NetworkClientRemove,
+            ClientAddPlayer: actions.HostClientAddPlayer,
+            ClientSetPlayerInputs: actions.PlayerInputChange,
+          })
+        )),
       ],
 
       state.view === 'game' && [

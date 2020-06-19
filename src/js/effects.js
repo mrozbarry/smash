@@ -1,5 +1,6 @@
 import * as declarativas from 'declarativas';
 import * as canvas from './canvas';
+import * as Peer from './lib/peer';
 
 
 const DeclarativasFX = (dispatch, {
@@ -18,6 +19,7 @@ const DeclarativasFX = (dispatch, {
   });
 };
 export const Declarativas = props => [DeclarativasFX, props];
+
 
 const LoadSpriteSheetFx = (dispatch, {
   character,
@@ -64,6 +66,7 @@ export const LoadSpritesForCharacter = props => [
   uri: props.assetCollection[`${props.character}_${type}`],
 }));
 
+
 const PunchFX = (dispatch, {
   sourceId,
   targetIds,
@@ -75,6 +78,7 @@ const PunchFX = (dispatch, {
 };
 export const Punch = props => [PunchFX, props];
 
+
 const RumbleGamepadFX = (_dispatch, { gamepad }) => {
   const actuators = Array.from(gamepad.hapticActuators || []);
   for (const actuator of actuators) {
@@ -82,6 +86,35 @@ const RumbleGamepadFX = (_dispatch, { gamepad }) => {
   }
 };
 export const RumbleGamepad = props => [RumbleGamepadFX, props];
+
+
+const NetworkCreatePeerFX = (dispatch, {
+  id,
+  AfterCreate,
+}) => {
+  const peer = Peer.make(id);
+
+  const onOpen = () => {
+    dispatch(AfterCreate, { peer });
+    peer.off('open', onOpen);
+  };
+
+  peer.on('open', onOpen);
+};
+export const NetworkCreatePeer = props => [NetworkCreatePeerFX, props];
+
+
+const NetworkConnectPeerFX = (dispatch, {
+  joinGameId,
+  peer,
+  OnAddConnection
+}) => {
+  if (!joinGameId) return;
+
+  const client = peer.connect(Peer.id(joinGameId));
+  dispatch(OnAddConnection, { client });
+};
+export const NetworkConnectPeer = props => [NetworkConnectPeerFX, props];
 
 
 const ClientMessageHostFX = (_dispatch, {
@@ -94,12 +127,12 @@ const ClientMessageHostFX = (_dispatch, {
 };
 export const ClientMessageHost = props => [ClientMessageHostFX, props];
 
-const HostMessageClientsFX = (_dispatch, {
-  clients,
+const MessageConnectionsFX = (_dispatch, {
+  connections,
   payload,
 }) => {
-  for(const client of clients) {
-    client.send(payload);
+  for(const connection of connections) {
+    connection.client.send(payload);
   }
 };
-export const HostMessageClients = props => [HostMessageClientsFX, props];
+export const MessageConnections = props => [MessageConnectionsFX, props];

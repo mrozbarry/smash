@@ -156,8 +156,8 @@ export const characterSelect = ({ state, characters }) => {
       },
     }, [
       h('h1', {}, 'JS Smash'),
-      state.network.isHost && h('span', {}, [
-        'Your host code is ',
+      h('span', {}, [
+        'Your join code is ',
         h('span', {
           style: {
             'font-family': 'monospace',
@@ -165,9 +165,9 @@ export const characterSelect = ({ state, characters }) => {
             'font-weight': 'bold',
             'text-decoration': 'underline',
           },
-        }, Peer.simplifyId(state.network.peer.id)),
+        }, state.network.joinGameId || state.network.id),
       ]),
-      showStartButton && h('button', {
+      h('button', {
         onclick: [actions.StartGame, {}],
         disabled: (
           Object.values(state.players).length === 0

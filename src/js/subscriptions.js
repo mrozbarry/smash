@@ -222,144 +222,91 @@ const GamepadConnectionsFX = (dispatch, { OnGamepadsChange }) => {
 };
 export const GamepadConnections = props => [GamepadConnectionsFX, props];
 
-const PeerHostFX = (dispatch, {
-  OnOpen,
-  ClientAdd,
+const PeerConnectionFX = (dispatch, {
+  connection,
   ClientRemove,
   ClientAddPlayer,
   ClientSetPlayerInputs,
+}) => {
+  console.log('PeerConnectionFX', { connection });
+
+  const onData = (data) => {
+    console.log('PeerConnectionFX.onData', { data });
+    switch (data.type) {
+    case 'setPlayer':
+      return dispatch(ClientAddPlayer, {
+        player: data.player,
+      });
+
+    case 'setInput':
+      return dispatch(ClientSetPlayerInputs, {
+        id: data.id,
+        inputKey: data.inputKey,
+        value: data.value,
+      });
+
+    default:
+      console.log('Unknown type', data.type);
+    }
+  };
+
+  const onClose = () => {
+    dispatch(ClientRemove, { connection });
+  };
+
+  const onError = (error) => {
+    console.warn('Host.connection error', connection, error);
+    connection.client.close();
+    dispatch(ClientRemove, { connection });
+  };
+
+  connection.client.on('data', onData);
+  connection.client.on('close', onClose);
+  connection.client.on('error', onError);
+
+  return () => {
+    connection.client.off('data', onData);
+    connection.client.off('close', onClose);
+    connection.client.off('error', onError);
+  };
+};
+export const PeerConnection = props => [PeerConnectionFX, props];
+
+
+const PeerHandlerFX = (dispatch, {
+  peer,
+  ClientAdd,
   OnDone,
 }) => {
-  const peer = Peer.make(
-    Math.random()
-      .toString(36)
-      .slice(2, 6)
-      .toUpperCase(),
-  );
-  console.log('PeerHostFX', peer);
-
-  peer.on('open', () => {
-    console.log('Established connection to PeerJS server', peer.id);
-    dispatch(OnOpen, { peer });
-  });
-
-  peer.on('connection', (client) => {
+  const onConnection = (client) => {
     console.log('Negotiating new connection');
 
     client.on('open', () => {
       console.log('Host.connection connected');
       dispatch(ClientAdd, { client })
     });
+  };
 
-    client.on('data', (data) => {
-      switch (data.type) {
-      case 'setPlayer':
-        return dispatch(ClientAddPlayer, {
-          player: data.player,
-        });
-
-      case 'setInput':
-        return dispatch(ClientSetPlayerInputs, {
-          id: data.id,
-          inputKey: data.inputKey,
-          value: data.value,
-        });
-
-      default:
-        console.log('Unknown type', data.type);
-      }
-    });
-
-    client.on('close', () => {
-      console.log('Host.connection close', client);
-      dispatch(ClientRemove, { client })
-    });
-
-    client.on('error', (error) => {
-      console.warn('Host.connection error', client, error);
-      client.close();
-      dispatch(ClientRemove, { client });
-    });
-  });
-
-  peer.on('disconnected', () => {
+  const onDisconnected = () => {
     console.warn('PeerHostFX.disconnected', peer);
-  });
+    peer.reconnect();
+  };
 
-  peer.on('error', (error) => {
+  const onError = (error) => {
     console.warn('PeerHostFX.error', peer, error);
-  });
+  };
+
+  peer.on('connection', onConnection);
+  peer.on('disconnected', onDisconnected);
+  peer.on('error', onError);
 
   return () => {
     console.log('PeerHostFX.cancel', peer);
+    peer.off('connection', onConnection);
+    peer.off('disconnected', onDisconnected);
+    peer.off('error', onError);
     peer.destroy();
     requestAnimationFrame(() => dispatch(OnDone));
   };
 };
-export const PeerHost = props => [PeerHostFX, props];
-
-const PeerClientFX = (dispatch, {
-  joinGameId,
-  OnOpen,
-  OnDone,
-  OnPlayersChange,
-  OnStartGame,
-}) => {
-  let peer = { destroy: () => {} };
-
-  const createPeer = () => {
-    console.log('Attempting to create a new client peer');
-
-    peer = Peer.make();
-    console.log('Establishing connection to peerjs');
-
-    peer.on('open', () => {
-      console.log('PeerClientFX.open', peer);
-      const dataConnection = peer.connect(Peer.id(joinGameId), {
-        serialization: 'json',
-        reliable: false,
-      });
-
-      dataConnection.on('open', () => {
-        dispatch(OnOpen, {
-          peer,
-          dataConnection,
-        });
-        console.log('PeerClientFX.connect.open');
-      });
-
-      dataConnection.on('data', (data) => {
-        if (data.players) {
-          dispatch(OnPlayersChange, {
-            players: data.players,
-          });
-        }
-
-        switch (data.type) {
-        case 'startGame':
-          return dispatch(OnStartGame, { isClient: true });
-        }
-      });
-
-      dataConnection.on('error', (error) => {
-        console.warn('PeerClientFX.dataConnection.error', error);
-      });
-    });
-
-    peer.on('error', (error) => {
-      console.warn('PeerClientFX.peer.error', error);
-      peer.destroy();
-      peer = { destroy: () => {} };
-      setTimeout(createPeer, 500);
-    });
-  };
-
-  createPeer();
-
-  return () => {
-    console.log('PeerClientFX.cancel', peer);
-    peer.destroy();
-    requestAnimationFrame(() => dispatch(OnDone));
-  };
-};
-export const PeerClient = props => [PeerClientFX, props];
+export const PeerHandler = props => [PeerHandlerFX, props];
