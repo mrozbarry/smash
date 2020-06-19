@@ -13,7 +13,6 @@ export const make = (peerId) => new Peer(
   options(true),
 )
 
-export const id = id => `com-github-mrozbarry-${id}-smash`;
+export const id = id => `com-github-mrozbarry-smash-${id}`;
 export const simplifyId = id => id
-  .replace(/^com-github-mrozbarry-/, '')
-  .replace(/-smash$/, '');
+  .replace(/^com-github-mrozbarry-smash-/, '');

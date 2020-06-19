@@ -107,12 +107,16 @@ export const NetworkCreatePeer = props => [NetworkCreatePeerFX, props];
 const NetworkConnectPeerFX = (dispatch, {
   joinGameId,
   peer,
-  OnAddConnection
+  OnAddConnection,
 }) => {
   if (!joinGameId) return;
 
   const client = peer.connect(Peer.id(joinGameId));
-  dispatch(OnAddConnection, { client });
+  const onOpen = () => {
+    dispatch(OnAddConnection, { client });
+    client.off('open', onOpen);
+  };
+  client.on('open', onOpen);
 };
 export const NetworkConnectPeer = props => [NetworkConnectPeerFX, props];
 

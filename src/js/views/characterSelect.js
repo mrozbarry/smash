@@ -135,11 +135,6 @@ const Player = ({ isLocal, characters, ...props }) => {
 };
 
 export const characterSelect = ({ state, characters }) => {
-  const showStartButton = (
-    !state.network.peer
-    || state.network.isHost
-  );
-
   return h('div', {
     style: {
       display: 'grid',
@@ -165,7 +160,7 @@ export const characterSelect = ({ state, characters }) => {
             'font-weight': 'bold',
             'text-decoration': 'underline',
           },
-        }, state.network.joinGameId || state.network.id),
+        }, state.network.id),
       ]),
       h('button', {
         onclick: [actions.StartGame, {}],

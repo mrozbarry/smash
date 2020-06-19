@@ -227,23 +227,30 @@ const PeerConnectionFX = (dispatch, {
   ClientRemove,
   ClientAddPlayer,
   ClientSetPlayerInputs,
+  AddConnection,
 }) => {
   console.log('PeerConnectionFX', { connection });
 
   const onData = (data) => {
     console.log('PeerConnectionFX.onData', { data });
     switch (data.type) {
-    case 'setPlayer':
+    case 'player.update':
       return dispatch(ClientAddPlayer, {
         player: data.player,
       });
 
-    case 'setInput':
+    case 'player.inputs.update':
       return dispatch(ClientSetPlayerInputs, {
         id: data.id,
         inputKey: data.inputKey,
         value: data.value,
       });
+
+    case 'peers.index':
+      for (const id of data.ids) {
+        dispatch(AddConnection, { id });
+      }
+      return;
 
     default:
       console.log('Unknown type', data.type);
@@ -283,7 +290,9 @@ const PeerHandlerFX = (dispatch, {
 
     client.on('open', () => {
       console.log('Host.connection connected');
-      dispatch(ClientAdd, { client })
+      requestAnimationFrame(() => {
+        dispatch(ClientAdd, { client })
+      });
     });
   };
 

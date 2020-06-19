@@ -69,6 +69,21 @@ app({
 
   view: (state) => h('div', {}, [
     h(viewScene, state),
+    state.network.peer && [
+      h('hr'),
+      h('div', {}, 'Connections:'),
+      h('ul', {}, [
+        state.network.connections.map((connection) => h('li', {
+          style: {
+            borderBottom: '1px black solid',
+            marginBottom: '0.5rem',
+            paddingBottom: '0.5rem',
+          },
+        }, [
+          h('div', {}, `ID: ${connection.client.peer}`),
+        ])),
+      ]),
+    ],
   ]),
 
   subscriptions: (state) => {
@@ -86,8 +101,9 @@ app({
           subscriptions.PeerConnection({
             connection,
             ClientRemove: actions.NetworkClientRemove,
-            ClientAddPlayer: actions.HostClientAddPlayer,
+            ClientAddPlayer: actions.PlayerMerge,
             ClientSetPlayerInputs: actions.PlayerInputChange,
+            AddConnection: actions.NetworkConnect,
           })
         )),
       ],
