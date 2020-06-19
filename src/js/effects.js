@@ -148,3 +148,13 @@ const MessageConnectionsFX = (_dispatch, {
   });
 };
 export const MessageConnections = props => [MessageConnectionsFX, props];
+
+const RespawnPlayerFX = (dispatch, {
+  id,
+  PlayerReset,
+}) => {
+  setTimeout(() => {
+    dispatch(PlayerReset, { id });
+  }, 1500);
+};
+export RespawnPlayer = props => [RespawnPlayerFX, props];

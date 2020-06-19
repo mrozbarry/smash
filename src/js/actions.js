@@ -268,6 +268,13 @@ export const PlayerReady = (state, { id, ready }) => {
   }), state);
 };
 
+export const PlayerActive = (state, { id, active }) => {
+  return _PlayerChange(id, (player) => ({
+    ...player,
+    active,
+  }), state);
+};
+
 export const PlayerMerge = (state, { player }) => {
   const players = {
     ...state.players,
@@ -280,6 +287,34 @@ export const PlayerMerge = (state, { player }) => {
   };
 };
 
+export const PlayerRespawn = (state, { id }) => {
+  const initialPlayer = state.players[id];
+  if (!initialPlayer) return state;
+
+  const player = {
+    ...initialPlayer,
+    object: physics.dynamic.reset(state.game, initialPlayer.object),
+    deaths: initialPlayer.deaths + 1,
+  };
+
+  return [
+    {
+      ...state,
+      players: {
+        ...state.players,
+        [id]: player,
+      },
+    },
+    effects.MessageConnections({
+      connections: state.network.connections,
+      payload: {
+        type: 'player.update',
+        player,
+      },
+    }),
+  ];
+};
+
 export const StartCharacterSelect = (state) => ({
   ...state,
   view: 'characterSelect',
@@ -287,9 +322,19 @@ export const StartCharacterSelect = (state) => ({
 
 
 export const StartGame = (state) => {
+  const localIds = Object.keys(state.controls);
+  const players = localIds.reduce((players, id) => ({
+    ...players,
+    [id]: {
+      ...players[id],
+      active: true,
+    },
+  }), state.players);
+
   return [
     {
       ...state,
+      players,
       view: 'game',
     },
     [
@@ -297,6 +342,15 @@ export const StartGame = (state) => {
         state,
         AfterRenderAction: Render,
       }),
+      ...localIds.map((id) => (
+        effects.MessageConnections({
+          connections: state.network.connections,
+          payload: {
+            type: 'player.update',
+            player: players[id],
+          },
+        })
+      )),
     ],
   ];
 };
@@ -487,6 +541,7 @@ export const Render = (state) => {
     .filter(p => (
       p.object.position.y > (state.canvas.height + (p.object.size.y * 2))
       && p.object.speed.y === 20
+      && !!state.controls[p.id]
     ))
     .map(p => p.id);
 
@@ -494,7 +549,6 @@ export const Render = (state) => {
     ...nextPlayers,
     [p.id]: {
       ...p,
-      // animation: animation.step(delta, p, p.animation),
       deaths: idsToKill.includes(p.id) ? p.deaths + 1 : p.deaths,
       object: idsToKill.includes(p.id) ? physics.dynamic.reset(state.game, p.object) : p.object,
     },
@@ -516,6 +570,10 @@ export const Render = (state) => {
         state: nextState,
         AfterRenderAction: Render,
       }),
+      ...idsToKill.map((id) => effects.RespawnPlayer({
+        id,
+        PlayerReset: PlayerRespawn,
+      })),
     ],
   ]
 };
