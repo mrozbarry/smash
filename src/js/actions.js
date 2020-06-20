@@ -13,22 +13,6 @@ const omit = (key, object) => {
   return nextObject;
 };
 
-const ArrowKeyBinds = {
-  'ArrowUp': 'jump',
-  'ArrowLeft': 'left',
-  'ArrowRight': 'right',
-  'Slash': 'punch',
-  // 'Period': 'kick',
-};
-
-const WasdKeyBinds = {
-  'KeyW': 'jump',
-  'KeyA': 'left',
-  'KeyD': 'right',
-  'KeyF': 'punch',
-  // 'KeyE': 'kick',
-};
-
 export const initialState = {
   view: 'loading',
   canvas: {
@@ -46,8 +30,18 @@ export const initialState = {
     level.geometry,
   ),
   keybinds: {
-    Arrows: ArrowKeyBinds,
-    WASD: WasdKeyBinds,
+    Arrows: {
+      'ArrowUp': 'jump',
+      'ArrowLeft': 'left',
+      'ArrowRight': 'right',
+      'Slash': 'punch',
+    },
+    WASD: {
+      'KeyW': 'jump',
+      'KeyA': 'left',
+      'KeyD': 'right',
+      'KeyF': 'punch',
+    },
   },
   characterSelection: {
     color: randomColor(),
@@ -57,10 +51,6 @@ export const initialState = {
   },
   network: {
     id: null,
-    isInitialized: false,
-    isHost: false,
-    isReady: false,
-    joinGameId: '',
     peer: null,
     connections: [],
   },
@@ -216,7 +206,6 @@ export const CharacterSelectionAddPlayer = (state, {
     active: false,
     name,
     character,
-    punchCountdown: null,
     inputs: {
       horizontal: 0,
       punch: 0,
@@ -360,44 +349,39 @@ export const PlayerRemove = (state, { id }) => ({
   players: omit(id, state.players),
 });
 
-export const PlayerKill = (state, { id }) => ({
-  ...state,
-  players: {
-    ...state.players,
-    [id]: {
-      ...state.players[id],
-      deaths: state.players[id].deaths + 1,
-      object: physics.dynamic.reset(state.game, state.players[id].object),
-    },
-  },
-});
-
 export const PlayerInputChange = (state, {
   id,
   inputKey,
   value,
 }) => {
   const prevPlayer = state.players[id];
+  let playerAnimation = prevPlayer.animation;
 
   const didPunch = inputKey === 'punch' && value > 0 && prevPlayer.inputs.punch === 0;
   const targetIds = prevPlayer.targets.map(t => t.id);
 
-  const player = {
-    ...prevPlayer,
-    punchCountdown: prevPlayer.punchCountdown > 0
-      ? prevPlayer.punchCountdown
-      : 0,
-    inputs: {
-      ...state.players[id].inputs,
-      [inputKey]: value,
-    },
-  };
+  if (didPunch && playerAnimation.name !== 'attack1') {
+    playerAnimation = animation.make(
+      'attack1',
+      state.spriteSheets[prevPlayer.character].attack1.frames,
+      0.06,
+    );
+  }
 
   const punchEffects = didPunch
     ? effects.Punch({ sourceId: id, targetIds, OnPunch: PlayerGetPunched })
     : [];
 
   const isLocal = !!state.controls[id];
+
+  const player = {
+    ...prevPlayer,
+    animation: playerAnimation,
+    inputs: {
+      ...state.players[id].inputs,
+      [inputKey]: value,
+    },
+  };
 
   return [
     {
@@ -473,7 +457,7 @@ export const Render = (state) => {
   let players = Object.values(state.players)
     .map((player) => ({
       ...player,
-      object: physics.dynamic.applyInputs(player.inputs, player.object),
+      object: physics.dynamic.applyInputs(player.inputs, player.animation.name.startsWith('attack'), player.object),
     }));
 
   const game = physics.world.applyDelta(delta, physics.integrate(delta, () => {
@@ -507,7 +491,9 @@ export const Render = (state) => {
         state.game.timestep,
         player.animation,
       );
-      if (playerAnimation.name !== 'idle' && player.inputs.horizontal === 0) {
+      if (playerAnimation.name === 'attack1' && playerAnimation.iteration === 0) {
+        // Noop
+      } else if (playerAnimation.name !== 'idle' && player.inputs.horizontal === 0) {
         playerAnimation = animation.make(
           'idle',
           state.spriteSheets[player.character].idle.frames,
@@ -550,7 +536,6 @@ export const Render = (state) => {
     [p.id]: {
       ...p,
       deaths: idsToKill.includes(p.id) ? p.deaths + 1 : p.deaths,
-      object: idsToKill.includes(p.id) ? physics.dynamic.reset(state.game, p.object) : p.object,
     },
   }), {});
 
@@ -589,19 +574,19 @@ export const NetworkInitialize = (state, {
       network: {
         ...state.network,
         id,
-        joinGameId,
         peer: null,
         connections: [],
       },
     },
     effects.NetworkCreatePeer({
       id,
+      joinGameId,
       AfterCreate: NetworkSetPeer,
     }),
   ];
 };
 
-export const NetworkSetPeer = (state, { peer }) => [
+export const NetworkSetPeer = (state, { peer, joinGameId }) => [
   {
     ...state,
     network: {
@@ -612,7 +597,7 @@ export const NetworkSetPeer = (state, { peer }) => [
   },
   effects.NetworkConnectPeer({
     peer,
-    joinGameId: state.network.joinGameId,
+    joinGameId,
     OnAddConnection: NetworkClientAdd,
   }),
 ];
@@ -621,9 +606,6 @@ export const NetworkUnsetPeer = (state) => ({
   ...state,
   network: {
     ...state.network,
-    isInitialized: false,
-    isReady: false,
-    joinGameId: '',
     peer: null,
     dataConnection: null,
   },

@@ -38,7 +38,7 @@ export const reset = (world, object) => {
   };
 };
 
-export const applyInputs = (inputs, object) => {
+export const applyInputs = (inputs, attacking, object) => {
   const isJumping = object.isOnGround && inputs.jump > 0;
 
   return {
@@ -49,7 +49,7 @@ export const applyInputs = (inputs, object) => {
       : object.isFacingRight,
     speed: vec.add(
       vec.multiply(
-        (inputs.punch === 0 ? 1 : 0),
+        (attacking ? 0 : 1),
         vec.make(
           object.walkSpeed * inputs.horizontal,
           isJumping && !object.isJumping ? object.jumpSpeed : 0,

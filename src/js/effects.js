@@ -1,6 +1,5 @@
 import * as declarativas from 'declarativas';
-import * as canvas from './canvas';
-import * as Peer from './lib/peer';
+import * as canvas from './canvas'; import * as Peer from './lib/peer';
 
 
 const DeclarativasFX = (dispatch, {
@@ -94,12 +93,13 @@ export const RumbleGamepad = props => [RumbleGamepadFX, props];
 
 const NetworkCreatePeerFX = (dispatch, {
   id,
+  joinGameId,
   AfterCreate,
 }) => {
   const peer = Peer.make(id);
 
   const onOpen = () => {
-    dispatch(AfterCreate, { peer });
+    dispatch(AfterCreate, { peer, joinGameId });
     peer.off('open', onOpen);
   };
 
@@ -109,8 +109,8 @@ export const NetworkCreatePeer = props => [NetworkCreatePeerFX, props];
 
 
 const NetworkConnectPeerFX = (dispatch, {
-  joinGameId,
   peer,
+  joinGameId,
   OnAddConnection,
 }) => {
   if (!joinGameId) return;
@@ -157,4 +157,4 @@ const RespawnPlayerFX = (dispatch, {
     dispatch(PlayerReset, { id });
   }, 1500);
 };
-export RespawnPlayer = props => [RespawnPlayerFX, props];
+export const RespawnPlayer = props => [RespawnPlayerFX, props];
