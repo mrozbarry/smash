@@ -3,10 +3,6 @@ import { revertableState } from './components/revertableState';
 import { staticGeometry } from './components/staticGeometry';
 import { player } from './components/player';
 
-const debug = (v) => {
-  return v;
-};
-
 export const view = (state) => c(revertableState, {}, [
   c('clearRect', {
     x: 0,
@@ -31,12 +27,13 @@ export const view = (state) => c(revertableState, {}, [
   ),
 
   Object.values(state.players)
+    .filter(p => !p.dead)
     .map((playerData) => c(
       player,
-      debug({
+      {
         ...playerData,
         spriteSheet: state.spriteSheets[playerData.character],
         game: state.game,
-      }),
+      },
     )),
 ]);

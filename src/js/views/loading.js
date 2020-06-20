@@ -36,7 +36,7 @@ export const loading = (state) => {
           width: '25%',
         },
       }, [
-        h('button', { onclick: actions.StartCharacterSelect }, 'Local Game'),
+        h('button', { onclick: actions.CharacterSelectionStart }, 'Local Game'),
         h('button', { onclick: [actions.NetworkInitialize, {} ] }, 'Host Game'),
         h('form', {
           onsubmit: [

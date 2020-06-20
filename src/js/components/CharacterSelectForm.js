@@ -30,7 +30,7 @@ export const CharacterSelectForm = (props) => h(FlexRow, {
     justifyContent: 'flex-start',
   },
   onsubmit: [
-    actions.CharacterSelectionAddPlayer,
+    actions.PlayerAdd,
     (event) => {
       event.preventDefault();
       return props;

@@ -163,7 +163,9 @@ export const characterSelect = ({ state, characters }) => {
         }, state.network.id),
       ]),
       h('button', {
-        onclick: [actions.StartGame, {}],
+        onclick: [actions.GameStart, {
+          RenderAction: actions.Render,
+        }],
         disabled: (
           Object.values(state.players).length === 0
           || Object.values(state.players).some(c => !c.ready)
