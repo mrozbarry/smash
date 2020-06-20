@@ -203,7 +203,7 @@ export const CharacterSelectionAddPlayer = (state, {
   const player = {
     id,
     ready: false,
-    active: false,
+    dead: true,
     name,
     character,
     inputs: {
@@ -283,7 +283,8 @@ export const PlayerRespawn = (state, { id }) => {
   const player = {
     ...initialPlayer,
     object: physics.dynamic.reset(state.game, initialPlayer.object),
-    deaths: initialPlayer.deaths + 1,
+    // deaths: initialPlayer.deaths + 1,
+    dead: false,
   };
 
   return [
@@ -312,23 +313,27 @@ export const StartCharacterSelect = (state) => ({
 
 export const StartGame = (state) => {
   const localIds = Object.keys(state.controls);
-  const players = localIds.reduce((players, id) => ({
-    ...players,
+  const players = localIds.reduce((memo, id) => ({
+    ...memo,
     [id]: {
-      ...players[id],
-      active: true,
+      ...memo[id],
+      dead: false,
     },
   }), state.players);
 
+  console.log('StartGame', players);
+
+  const nextState = {
+    ...state,
+    players,
+    view: 'game',
+  };
+
   return [
-    {
-      ...state,
-      players,
-      view: 'game',
-    },
+    nextState,
     [
       effects.Declarativas({
-        state,
+        state: nextState,
         AfterRenderAction: Render,
       }),
       ...localIds.map((id) => (
@@ -462,6 +467,8 @@ export const Render = (state) => {
 
   const game = physics.world.applyDelta(delta, physics.integrate(delta, () => {
     players = players.map(player => {
+      if (player.dead) return player;
+
       const ground = physics.world.detectClosestPlatform(
         player.object,
         state.game,
@@ -523,10 +530,16 @@ export const Render = (state) => {
 
   }, state.game));
 
+  const lowestYValue = game.geometry.reduce((lowestY, geometry) => Math.max(
+    lowestY,
+    geometry.y,
+    geometry.y + geometry.height,
+  ), 0);
+
   const idsToKill = players
     .filter(p => (
-      p.object.position.y > (state.canvas.height + (p.object.size.y * 2))
-      && p.object.speed.y === 20
+      p.object.position.y > (lowestYValue + (p.object.size.y * 2))
+      && !p.dead
       && !!state.controls[p.id]
     ))
     .map(p => p.id);
@@ -535,7 +548,8 @@ export const Render = (state) => {
     ...nextPlayers,
     [p.id]: {
       ...p,
-      deaths: idsToKill.includes(p.id) ? p.deaths + 1 : p.deaths,
+      dead: idsToKill.includes(p.id) ? true : p.dead,
+      deaths: !p.dead && idsToKill.includes(p.id) ? p.deaths + 1 : p.deaths,
     },
   }), {});
 
