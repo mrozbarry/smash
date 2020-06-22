@@ -164,7 +164,8 @@ export const characterSelect = ({ state, characters }) => {
       ]),
       h('button', {
         onclick: [actions.GameStart, {
-          RenderAction: actions.Render,
+          RenderAction: actions.GameRender,
+          OnRespawn: actions.PlayerRespawn,
         }],
         disabled: (
           Object.values(state.players).length === 0

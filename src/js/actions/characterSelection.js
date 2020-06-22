@@ -16,12 +16,7 @@ export const state = {
       'ArrowLeft': 'left',
       'ArrowRight': 'right',
       'Slash': 'punch',
-    },
-    WASD: {
-      'KeyW': 'jump',
-      'KeyA': 'left',
-      'KeyD': 'right',
-      'KeyF': 'punch',
+      'ShiftRight': 'run',
     },
   },
 };
@@ -29,7 +24,7 @@ export const state = {
 export const GamepadsUpdate = (state, gamepads) => {
   const canUpdateKeybind = state.view == 'characterSelect'
     && state.characterSelection.keybind === ''
-    && state.characterSelect.gamepadIndex === null;
+    && state.characterSelection.gamepadIndex === null;
 
   const newGamepad = state.gamepads.find((gamepad, index) => (
     (!gamepad || !gamepad.connected)

@@ -47,7 +47,6 @@ export const PlayerAdd = (state, {
   const object = physics.dynamic.reset(
     state.game,
     physics.dynamic.make(
-      physics.vec.zero,
       physics.vec.make(
         90,
         90,
@@ -67,6 +66,7 @@ export const PlayerAdd = (state, {
       horizontal: 0,
       punch: 0,
       jump: 0,
+      run: 0,
     },
     animation: animation.make(
       'idle',
@@ -174,15 +174,27 @@ export const PlayerInputChange = (state, {
 }) => {
   const prevPlayer = state.players[id];
   let playerAnimation = prevPlayer.animation;
+  let object = prevPlayer.object;
 
   const didPunch = inputKey === 'punch' && value > 0 && prevPlayer.inputs.punch === 0;
   const targetIds = prevPlayer.targets.map(t => t.id);
 
-  if (didPunch && playerAnimation.name !== 'attack1') {
+  if (didPunch && !object.isAttacking) {
+    let attackName = 'attack3';
+    if (!object.isOnGround) {
+      attackName = 'attack1';
+    } else if (object.isRunning) {
+      attackName = 'attack2';
+    }
     playerAnimation = animation.make(
-      'attack1',
-      state.spriteSheets[prevPlayer.character].attack1.frames,
+      attackName,
+      state.spriteSheets[prevPlayer.character][attackName].frames,
       0.06,
+    );
+    object = physics.dynamic.attack(
+      object.isRunning,
+      true,
+      object,
     );
   }
 
@@ -199,6 +211,7 @@ export const PlayerInputChange = (state, {
       ...state.players[id].inputs,
       [inputKey]: value,
     },
+    object,
   };
 
   return [

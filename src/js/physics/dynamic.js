@@ -2,20 +2,24 @@ import * as vec from './vector2d';
 import * as rect from './rect';
 import * as aabb from './aabb';
 
-export const make = (position, size) => ({
-  position,
+export const make = (size) => ({
+  position: vec.zero,
   aabb: aabb.make(
     vec.zero,
     vec.zero,
   ),
   speed: vec.zero,
   force: vec.zero,
+  isLocked: false,
   isOnGround: false,
   isJumping: false,
+  isAttacking: false,
   isFacingRight: true,
   size,
-  walkSpeed: 0.8,
-  jumpSpeed: -9,
+  walkSpeed: 0.4,
+  runSpeed: 0.8,
+  jumpSpeed: -10,
+  runJumpMultiplier: 0.9,
   punch: vec.make(
     10,
     -10,
@@ -30,6 +34,7 @@ export const reset = (world, object) => {
     isFacingRight: (Math.random() * 10) > 5,
     isOnGround: false,
     isJumping: false,
+    isLocked: false,
     position: vec.make(
       x,
       100,
@@ -38,21 +43,38 @@ export const reset = (world, object) => {
   };
 };
 
-export const applyInputs = (inputs, attacking, object) => {
+export const lock = (isLocked, object) => ({
+  ...object,
+  isLocked,
+});
+
+export const attack = (shouldLock, isAttacking, object) => lock(
+  isAttacking && shouldLock,
+  {
+    ...object,
+    isAttacking,
+  },
+);
+
+export const applyInputs = (inputs, object) => {
   const isJumping = object.isOnGround && inputs.jump > 0;
+  const isRunning = inputs.run > 0.5;
+
+  const jumpModifier = isRunning ? object.runJumpMultiplier : 1;
 
   return {
     ...object,
     isJumping,
+    isRunning,
     isFacingRight: inputs.horizontal !== 0
       ? inputs.horizontal > 0
       : object.isFacingRight,
     speed: vec.add(
       vec.multiply(
-        (attacking ? 0 : 1),
+        (object.isLocked ? 0 : 1),
         vec.make(
-          object.walkSpeed * inputs.horizontal,
-          isJumping && !object.isJumping ? object.jumpSpeed : 0,
+          (isRunning ? object.runSpeed : object.walkSpeed) * inputs.horizontal,
+          isJumping && !object.isJumping ? (object.jumpSpeed * jumpModifier) : 0,
         ),
       ),
       object.speed,

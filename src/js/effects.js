@@ -5,6 +5,7 @@ import * as canvas from './canvas'; import * as Peer from './lib/peer';
 const DeclarativasFX = (dispatch, {
   state,
   AfterRenderAction,
+  OnRespawn,
 }) => {
   requestAnimationFrame(() => {
     if (state.canvas.context) {
@@ -14,7 +15,7 @@ const DeclarativasFX = (dispatch, {
       );
     }
 
-    dispatch(AfterRenderAction);
+    dispatch(AfterRenderAction, { OnRespawn });
   });
 };
 export const Declarativas = props => [DeclarativasFX, props];
@@ -55,16 +56,23 @@ const LoadSpriteSheetFx = (dispatch, {
 };
 export const LoadSpriteSheet = props => [LoadSpriteSheetFx, props];
 
-export const LoadSpritesForCharacter = props => [
-  'idle',
-  'run',
-  'attack1',
-  'attack2',
-].map((type) => LoadSpriteSheet({
+
+const animationMap = {
+  'idle': 'idle',
+  'walk': 'walk',
+  'run': 'run',
+  'attack1': 'attack1',
+  'attack2': 'attack2',
+  'attack3': 'attack3',
+};
+
+export const LoadSpritesForCharacter = props => Object.keys(
+  animationMap,
+).map((type) => LoadSpriteSheet({
   ...props,
   character: props.character.toLowerCase(),
   type,
-  uri: props.assetCollection[`${props.character}_${type}`],
+  uri: props.assetCollection[`${props.character}_${animationMap[type]}`],
 }));
 
 
