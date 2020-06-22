@@ -103,6 +103,7 @@ app({
             ClientRemove: actions.NetworkClientRemove,
             ClientAddPlayer: actions.PlayerMerge,
             ClientSetPlayerInputs: actions.PlayerInputChange,
+            ClientPlayerPunch: actions.PlayerGetPunched,
             AddConnection: actions.NetworkConnect,
           })
         )),

@@ -214,6 +214,7 @@ const PeerConnectionFX = (dispatch, {
   ClientRemove,
   ClientAddPlayer,
   ClientSetPlayerInputs,
+  ClientPlayerPunch,
   AddConnection,
 }) => {
   console.log('PeerConnectionFX', { connection });
@@ -232,6 +233,15 @@ const PeerConnectionFX = (dispatch, {
         inputKey: data.inputKey,
         value: data.value,
       });
+
+    case 'player.punch':
+      for (const id of data.targetIds) {
+        dispatch(ClientPlayerPunch, {
+          sourceId: data.sourceId,
+          id,
+        });
+      }
+      return;
 
     case 'peers.index':
       for (const id of data.ids) {

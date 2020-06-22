@@ -191,9 +191,24 @@ export const PlayerInputChange = (state, {
     );
   }
 
-  const punchEffects = didPunch
-    ? effects.Punch({ sourceId: id, targetIds, OnPunch: PlayerGetPunched })
-    : [];
+  const localTargetIds = targetIds.filter((tId) => state.controls[tId]);
+  const networkTargetIds = targetIds.filter((tId) => !state.controls[tId]);
+
+  let punchEffects = []
+
+  if (didPunch) {
+    punchEffects = [
+      effects.Punch({ sourceId: id, targetIds: localTargetIds, OnPunch: PlayerGetPunched }),
+      effects.MessageConnections({
+        connections: state.network.connections,
+        payload: {
+          type: 'player.punch',
+          sourceId: id,
+          targetIds: networkTargetIds,
+        },
+      }),
+    ];
+  }
 
   const isLocal = !!state.controls[id];
 
@@ -240,7 +255,11 @@ export const PlayerInputChange = (state, {
 };
 
 export const PlayerGetPunched = (state, { id, sourceId }) => {
-  const player = state.players[id];
+  if (!state.controls[id]) {
+    return state;
+  }
+
+  const prevHitPlayer = state.players[id];
   const sourcePlayer = state.players[sourceId];
   const force = physics.vec.add(
     physics.vec.make(
@@ -250,16 +269,26 @@ export const PlayerGetPunched = (state, { id, sourceId }) => {
     sourcePlayer.object.speed,
   );
 
+  const hitPlayer = {
+    ...prevHitPlayer,
+    object: physics.dynamic.applyForce(force, prevHitPlayer.object),
+  };
+
+
   return [
     {
       ...state,
       players: {
         ...state.players,
-        [id]: {
-          ...player,
-          object: physics.dynamic.applyForce(force, player.object),
-        },
+        [id]: hitPlayer,
       },
     },
+    effects.MessageConnections({
+      connections: state.network.connections,
+      payload: {
+        type: 'player.update',
+        player: hitPlayer,
+      },
+    }),
   ];
 };
