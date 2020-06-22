@@ -216,7 +216,8 @@ const PeerConnectionFX = (dispatch, {
   AddConnection,
 }) => {
   let ids = [];
-  const onData = (data) => {
+  const onData = (stringData) => {
+    const data = JSON.parse(stringData);
     switch (data.type) {
     case 'player.update':
       ids = Array.from(new Set(ids.concat(data.player.id)));

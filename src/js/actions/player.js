@@ -42,10 +42,6 @@ export const PlayerShareLocalsWithConnection = (state, {
   const localPlayers = Object.keys(state.controls)
     .map((id) => state.players[id]);
 
-  console.log('PlayerShareLocalsWithConnection', {
-    localPlayers,
-    connection,
-  });
   return [
     state,
     localPlayers.map((player) => (
@@ -157,7 +153,6 @@ export const PlayerRespawn = (state, { id }) => {
   const player = {
     ...initialPlayer,
     object: physics.dynamic.reset(state.game, initialPlayer.object),
-    // deaths: initialPlayer.deaths + 1,
     dead: false,
   };
 
@@ -264,13 +259,6 @@ export const PlayerInputChange = (state, {
             id,
             inputKey,
             value,
-          },
-        }),
-        effects.MessageConnections({
-          connections: state.network.connections,
-          payload: {
-            type: 'player.update',
-            player,
           },
         }),
       ],

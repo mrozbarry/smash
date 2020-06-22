@@ -123,7 +123,12 @@ const NetworkConnectPeerFX = (dispatch, {
 }) => {
   if (!joinGameId) return;
 
-  const client = peer.connect(Peer.id(joinGameId));
+  const client = peer.connect(
+    Peer.id(joinGameId),
+    {
+      serialization: 'none',
+    },
+  );
   const onOpen = () => {
     dispatch(OnAddConnection, { client });
     client.off('open', onOpen);
@@ -133,25 +138,14 @@ const NetworkConnectPeerFX = (dispatch, {
 export const NetworkConnectPeer = props => [NetworkConnectPeerFX, props];
 
 
-const ClientMessageHostFX = (_dispatch, {
-  dataConnection,
-  payload,
-}) => {
-  requestAnimationFrame(() => {
-    if (dataConnection) {
-      dataConnection.send(payload);
-    }
-  });
-};
-export const ClientMessageHost = props => [ClientMessageHostFX, props];
-
 const MessageConnectionsFX = (_dispatch, {
   connections,
   payload,
 }) => {
+  const data = JSON.stringify(payload);
   requestAnimationFrame(() => {
     for(const connection of connections) {
-      connection.client.send(payload);
+      connection.client.send(data);
     }
   });
 };
