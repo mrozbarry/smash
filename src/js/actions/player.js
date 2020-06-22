@@ -180,11 +180,11 @@ export const PlayerInputChange = (state, {
   const targetIds = prevPlayer.targets.map(t => t.id);
 
   if (didPunch && !object.isAttacking) {
-    let attackName = 'attack3';
+    let attackName = object.isRunning || Math.abs(prevPlayer.inputs.horizontal) < 0.01
+      ? 'attack2'
+      : 'attack3';
     if (!object.isOnGround) {
       attackName = 'attack1';
-    } else if (object.isRunning) {
-      attackName = 'attack2';
     }
     playerAnimation = animation.make(
       attackName,

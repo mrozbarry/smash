@@ -20,14 +20,8 @@ export const player = (props) => {
       x: props.object.position.x - (props.object.size.x / 2),
       y: props.object.position.y - props.object.size.y,
     }, [
-      c('fillStyle', { value: 'black' }),
-      c('fillText', {
-        x: 0,
-        y: -10,
-        text: `Dead? ${props.dead.toString()}`,
-      }),
       c(mirror, { horizontal: !props.object.isFacingRight }, [
-        !props.object.isFacingRight && c('translate', { x: rect.width / -1.5, y: 0 }),
+        !props.object.isFacingRight && c('translate', { x: rect.width / -2, y: 0 }),
         c('drawImage', {
           // image: props.animation.spriteSheet.image,
           image: props.spriteSheet[props.animation.name].image,
