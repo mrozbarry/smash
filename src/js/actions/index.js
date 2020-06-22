@@ -1,12 +1,9 @@
-import * as effects from '../effects';
-import * as physics from '../physics';
-import * as animation from '../animation';
-
 import * as SpriteSheet from './spriteSheet';
 import * as CharacterSelection from './characterSelection';
 import * as Player from './player';
 import * as Game from './game';
 import * as Network from './network';
+import * as Canvas from './canvas';
 
 export const initialState = {
   ...SpriteSheet.state,
@@ -14,12 +11,8 @@ export const initialState = {
   ...Player.state,
   ...Game.state,
   ...Network.state,
+  ...Canvas.state,
   view: 'loading',
-  canvas: {
-    width: 1280,
-    height: 720,
-    context: null,
-  },
 };
 
 export const SpriteSheetLoad = SpriteSheet.SpriteSheetLoad;
@@ -34,7 +27,6 @@ export const CharacterSelectionStart = CharacterSelection.CharacterSelectionStar
 export const PlayerAdd = Player.PlayerAdd;
 export const PlayerChangeCharacter = Player.PlayerChangeCharacter;
 export const PlayerReady = Player.PlayerReady;
-export const PlayerActive = Player.PlayerActive;
 export const PlayerMerge = Player.PlayerMerge;
 export const PlayerRespawn = Player.PlayerRespawn;
 export const PlayerRemove = Player.PlayerRemove;
@@ -52,11 +44,5 @@ export const NetworkClientAdd = Network.NetworkClientAdd;
 export const NetworkClientRemove = Network.NetworkClientRemove;
 
 
-export const CanvasSetContext = (state, context) => ({
-  ...state,
-  canvas: {
-    ...state.canvas,
-    context,
-  },
-});
+export const CanvasSetContext = Canvas.CanvasSetContext;
 

@@ -23,7 +23,7 @@ export const state = {
 
 export const GamepadsUpdate = (state, gamepads) => {
   const canUpdateKeybind = state.view == 'characterSelect'
-    && state.characterSelection.keybind === ''
+    && !state.characterSelection.keybind
     && state.characterSelection.gamepadIndex === null;
 
   const newGamepad = state.gamepads.find((gamepad, index) => (

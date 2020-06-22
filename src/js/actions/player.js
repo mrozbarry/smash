@@ -114,13 +114,6 @@ export const PlayerReady = (state, { id, ready }) => {
   }), state);
 };
 
-export const PlayerActive = (state, { id, active }) => {
-  return _PlayerChange(id, (player) => ({
-    ...player,
-    active,
-  }), state);
-};
-
 export const PlayerMerge = (state, { player }) => {
   const players = {
     ...state.players,
