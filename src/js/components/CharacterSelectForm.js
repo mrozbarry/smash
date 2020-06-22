@@ -89,7 +89,7 @@ export const CharacterSelectForm = (props) => h(FlexRow, {
       h('option', { value: '' }, 'Select your controls'),
       props.gamepads.filter(Boolean).map((gamepad) => (
         h('option', {
-          selected: props.gamepadIndex === gamepad.index,
+          selected: props.gamepadIndex == gamepad.index,
           value: gamepad.index,
         }, `Gamepad ${gamepad.index} (${gamepad.id})`)
       )),

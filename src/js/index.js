@@ -115,7 +115,7 @@ app({
         }),
 
         controls
-          .filter(c => typeof c.gamepadIndex === 'number')
+          .filter(c => !Number.isNaN(c.gamepadIndex))
           .map((props) => (
             subscriptions.GamepadPlayer({
               ...props,

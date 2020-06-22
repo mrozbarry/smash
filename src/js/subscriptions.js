@@ -93,14 +93,11 @@ export const KeyboardPlayer = props => [KeyboardPlayerSub, props];
 
 const GamepadPlayerSubFX = (dispatch, {
   id,
-  name,
-  color,
-  character,
   gamepadIndex,
-  OnAdd,
-  OnRemove,
   OnInputChange,
 }) => {
+  console.log('GamepadPlayerSub', {
+  });
   let lastChange = performance.now();
   let running = true;
   let handle = null;
@@ -110,6 +107,7 @@ const GamepadPlayerSubFX = (dispatch, {
     horizontalDPad: 0,
     jump: 0,
     punch: 0,
+    run: 0,
   };
 
   const threshold = (min, value) => Math.abs(value) >= min ? Math.sign(value): 0;
@@ -131,6 +129,13 @@ const GamepadPlayerSubFX = (dispatch, {
       inputKey: 'punch',
       value: (gamepad) => gamepad.buttons[2].value,
     },
+    {
+      inputKey: 'run',
+      value: (gamepad) => (
+        gamepad.buttons[5].value > 0
+        || gamepad.buttons[5].value > 0
+      ),
+    },
   ];
 
   const update = (inputKey, value) => {
@@ -139,13 +144,6 @@ const GamepadPlayerSubFX = (dispatch, {
       : [];
     state = { ...state, [inputKey]: value };
     return changes;
-  };
-
-  const keybinds = {
-    'A': 'jump',
-    'X': 'punch',
-    'DPad Left|Right Joystick X Axis': 'left',
-    'DPad Right|Right Joystick X Axis': 'right',
   };
 
   const checkGamepad = () => {
@@ -184,22 +182,11 @@ const GamepadPlayerSubFX = (dispatch, {
     handle = requestAnimationFrame(checkGamepad);
   };
 
-  requestAnimationFrame(() => {
-    dispatch(OnAdd, {
-      id,
-      name,
-      color,
-      keybinds,
-      character,
-    });
-
-    checkGamepad();
-  });
+  requestAnimationFrame(checkGamepad);
 
   return () => {
     running = false;
     cancelAnimationFrame(handle);
-    requestAnimationFrame(() => dispatch(OnRemove, { id }));
   };
 };
 export const GamepadPlayer = props => [GamepadPlayerSubFX, props];
