@@ -26,12 +26,11 @@ export const state = {
 export const GamepadsUpdate = (state, gamepads) => {
   const canUpdateKeybind = state.view == 'characterSelect'
     && !state.characterSelection.keybind
-    && state.characterSelection.gamepadIndex === null;
+    && state.characterSelection.gamepadIndex == null;
 
-  const newGamepad = state.gamepads.find((gamepad, index) => (
-    (!gamepad || !gamepad.connected)
-    && (gamepads[index] && gamepads[index].connected)
-  ));
+  const newGamepad = gamepads
+    .filter(gp => gp && gp.connected)
+    .sort((a, b) => a.timestamp - b.timestamp)[0];
 
   const willChangeCharacterSelection = canUpdateKeybind && newGamepad;
 
