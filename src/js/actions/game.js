@@ -3,6 +3,7 @@ import * as effects from '../effects';
 import * as physics from '../physics';
 
 import * as animation from '../animation';
+import * as pipeline from '../lib/pipeline';
 
 import * as level from '../levels/demo';
 
@@ -54,6 +55,56 @@ export const GameStart = (state, {
   ];
 };
 
+const animationPipeline = (spriteSheets) => pipeline.make([
+  // Continue attack until 1 full animation cycle
+  (next, player) => {
+    if (!player.object.isAttacking || player.animation.iteration > 0) {
+      return next(player);
+    }
+    return player;
+  },
+
+  // Idle if no horizontal input
+  (next, player) => {
+    if (player.animation.name === 'idle' || player.inputs.horizontal) {
+      return next(player);
+    }
+    return {
+      ...player,
+      animation: animation.make(
+        'idle',
+        spriteSheets[player.character].idle.frames,
+        0.25,
+      ),
+      object: physics.dynamic.attack(false, false, player.object),
+    };
+  },
+
+  (next, player) => {
+    if (Math.abs(player.inputs.horizontal) < 0.01) {
+      return next(player);
+    }
+
+    const animationName = player.object.isRunning ? 'run' : 'walk';
+
+    return {
+      ...player,
+      animation: animation.make(
+        animationName,
+        spriteSheets[player.character][animationName].frames,
+        Math.max(0.1, 1 - (Math.abs(player.object.speed.x) / 2)),
+        player.animation.name === animationName
+          ? player.animation.frame
+          : 0,
+        player.animation.name === animationName
+          ? player.animation.time
+          : 0,
+      ),
+      object: physics.dynamic.attack(false, false, player.object),
+    };
+  },
+]);
+
 export const GameRender = (state, {
   OnRespawn,
 }) => {
@@ -97,41 +148,12 @@ export const GameRender = (state, {
           )
         ));
 
-      let playerAnimation = animation.step(
-        state.game.timestep,
-        player.animation,
-      );
-      if (object.isAttacking && playerAnimation.iteration === 0) {
-        // Noop
-      } else if (playerAnimation.name !== 'idle' && player.inputs.horizontal === 0) {
-        playerAnimation = animation.make(
-          'idle',
-          state.spriteSheets[player.character].idle.frames,
-          0.25,
-        );
-        object = physics.dynamic.attack(false, false, object);
-      } else if (player.inputs.horizontal !== 0) {
-        const animationName = player.object.isRunning ? 'run' : 'walk';
-        playerAnimation = animation.make(
-          animationName,
-          state.spriteSheets[player.character][animationName].frames,
-          Math.max(0.1, 1 - (Math.abs(object.speed.x) / 2)),
-          playerAnimation.name === animationName
-            ? playerAnimation.frame
-            : 0,
-          playerAnimation.name === animationName
-            ? playerAnimation.time
-            : 0,
-        );
-        object = physics.dynamic.attack(false, false, object);
-      }
-
-      return {
+      return animationPipeline(state.spriteSheets)({
         ...player,
-        animation: playerAnimation,
+        animation: animation.step(state.game.timestep, player.animation),
         targets,
         object,
-      };
+      });
     });
 
   }, state.game));
