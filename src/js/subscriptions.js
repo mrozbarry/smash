@@ -220,12 +220,12 @@ const PeerConnectionFX = (dispatch, {
     const data = JSON.parse(stringData);
     switch (data.type) {
     case 'player.update':
-      ids = Array.from(new Set(ids.concat(data.player.id)));
       return dispatch(ClientAddPlayer, {
         player: data.player,
       });
 
     case 'player.inputs.update':
+      ids = Array.from(new Set(ids.concat(data.id)));
       return dispatch(ClientSetPlayerInputs, {
         id: data.id,
         inputKey: data.inputKey,
@@ -259,7 +259,7 @@ const PeerConnectionFX = (dispatch, {
 
   const onError = (error) => {
     console.warn('Host.connection error', connection, error);
-    connection.client.close();
+    // connection.client.close();
     dispatch(ClientRemove, { connection });
   };
 
@@ -280,7 +280,6 @@ const PeerHandlerFX = (dispatch, {
   peer,
   ClientAdd,
   ShareLocalPlayers,
-  OnDone,
 }) => {
   const onConnection = (client) => {
     client.on('open', () => {
@@ -309,8 +308,8 @@ const PeerHandlerFX = (dispatch, {
     peer.off('connection', onConnection);
     peer.off('disconnected', onDisconnected);
     peer.off('error', onError);
-    peer.destroy();
-    requestAnimationFrame(() => dispatch(OnDone));
+    //peer.destroy();
+    //requestAnimationFrame(() => dispatch(OnDone));
   };
 };
 export const PeerHandler = props => [PeerHandlerFX, props];
