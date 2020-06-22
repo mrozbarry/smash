@@ -16,7 +16,9 @@ export const state = {
       'ArrowLeft': 'left',
       'ArrowRight': 'right',
       'Slash': 'punch',
+      'Z': 'punch',
       'ShiftRight': 'run',
+      'ShiftLeft': 'run',
     },
   },
 };

@@ -94,6 +94,7 @@ app({
         subscriptions.PeerHandler({
           peer: state.network.peer,
           ClientAdd: actions.NetworkClientAdd,
+          ShareLocalPlayers: actions.PlayerShareLocalsWithConnection,
           OnDone: actions.NetworkUnsetPeer,
         }),
 

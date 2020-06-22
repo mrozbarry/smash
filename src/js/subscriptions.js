@@ -96,8 +96,6 @@ const GamepadPlayerSubFX = (dispatch, {
   gamepadIndex,
   OnInputChange,
 }) => {
-  console.log('GamepadPlayerSub', {
-  });
   let lastChange = performance.now();
   let running = true;
   let handle = null;
@@ -217,12 +215,11 @@ const PeerConnectionFX = (dispatch, {
   ClientPlayerPunch,
   AddConnection,
 }) => {
-  console.log('PeerConnectionFX', { connection });
-
+  let ids = [];
   const onData = (data) => {
-    console.log('PeerConnectionFX.onData', { data });
     switch (data.type) {
     case 'player.update':
+      ids = Array.from(new Set(ids.concat(data.player.id)));
       return dispatch(ClientAddPlayer, {
         player: data.player,
       });
@@ -255,6 +252,7 @@ const PeerConnectionFX = (dispatch, {
   };
 
   const onClose = () => {
+    connection.client.close();
     dispatch(ClientRemove, { connection });
   };
 
@@ -280,15 +278,14 @@ export const PeerConnection = props => [PeerConnectionFX, props];
 const PeerHandlerFX = (dispatch, {
   peer,
   ClientAdd,
+  ShareLocalPlayers,
   OnDone,
 }) => {
   const onConnection = (client) => {
-    console.log('Negotiating new connection');
-
     client.on('open', () => {
-      console.log('Host.connection connected');
       requestAnimationFrame(() => {
         dispatch(ClientAdd, { client })
+        dispatch(ShareLocalPlayers, { connection: { client } });
       });
     });
   };

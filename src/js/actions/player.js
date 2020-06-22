@@ -36,6 +36,30 @@ const _PlayerChange = (id, mutation, state) => {
   ];
 }
 
+export const PlayerShareLocalsWithConnection = (state, {
+  connection,
+}) => {
+  const localPlayers = Object.keys(state.controls)
+    .map((id) => state.players[id]);
+
+  console.log('PlayerShareLocalsWithConnection', {
+    localPlayers,
+    connection,
+  });
+  return [
+    state,
+    localPlayers.map((player) => (
+      effects.MessageConnections({
+        connections: [connection],
+        payload: {
+          type: 'player.update',
+          player,
+        },
+      })
+    )),
+  ];
+};
+
 export const PlayerAdd = (state, {
   keybind,
   gamepadIndex,

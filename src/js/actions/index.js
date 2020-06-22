@@ -24,6 +24,7 @@ export const CharacterSelectionSetName = CharacterSelection.CharacterSelectionSe
 export const CharacterSelectionSetKeybind = CharacterSelection.CharacterSelectionSetKeybind;
 export const CharacterSelectionStart = CharacterSelection.CharacterSelectionStart;
 
+export const PlayerShareLocalsWithConnection = Player.PlayerShareLocalsWithConnection;
 export const PlayerAdd = Player.PlayerAdd;
 export const PlayerChangeCharacter = Player.PlayerChangeCharacter;
 export const PlayerReady = Player.PlayerReady;
