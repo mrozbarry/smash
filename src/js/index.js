@@ -102,6 +102,7 @@ app({
           subscriptions.PeerConnection({
             connection,
             ClientRemove: actions.NetworkClientRemove,
+            ClientRemovePlayers: actions.PlayerRemoveByConnectionId,
             ClientAddPlayer: actions.PlayerMerge,
             ClientSetPlayerInputs: actions.PlayerInputChange,
             ClientPlayerPunch: actions.PlayerGetPunched,

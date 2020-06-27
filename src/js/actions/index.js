@@ -31,6 +31,7 @@ export const PlayerReady = Player.PlayerReady;
 export const PlayerMerge = Player.PlayerMerge;
 export const PlayerRespawn = Player.PlayerRespawn;
 export const PlayerRemove = Player.PlayerRemove;
+export const PlayerRemoveByConnectionId = Player.PlayerRemoveByConnectionId;
 export const PlayerInputChange = Player.PlayerInputChange;
 export const PlayerGetPunched = Player.PlayerGetPunched;
 

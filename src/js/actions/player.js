@@ -78,6 +78,7 @@ export const PlayerAdd = (state, {
 
   const player = {
     id,
+    connectionId: state.network.id,
     ready: false,
     dead: true,
     name,
@@ -134,10 +135,13 @@ export const PlayerReady = (state, { id, ready }) => {
   }), state);
 };
 
-export const PlayerMerge = (state, { player }) => {
+export const PlayerMerge = (state, { player, connectionId }) => {
   const players = {
     ...state.players,
-    [player.id]: player,
+    [player.id]: {
+      ...player,
+      connectionId,
+    },
   };
 
   return {
@@ -145,6 +149,17 @@ export const PlayerMerge = (state, { player }) => {
     players,
   };
 };
+
+export const PlayerRemoveByConnectionId = (state, { connectionId }) => ({
+  ...state,
+  players: Object.keys(state.players).reduce((players, id) => ({
+    ...players,
+    ...(state.players[id].connectionId === connectionId
+      ? {}
+      : state.players[id]
+    ),
+  }), {}),
+});
 
 export const PlayerRespawn = (state, { id }) => {
   const initialPlayer = state.players[id];
@@ -259,6 +274,13 @@ export const PlayerInputChange = (state, {
             id,
             inputKey,
             value,
+          },
+        }),
+        effects.MessageConnections({
+          connections: state.network.connections,
+          payload: {
+            type: 'player.update',
+            player,
           },
         }),
       ],

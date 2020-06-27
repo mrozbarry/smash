@@ -210,13 +210,17 @@ export const GamepadConnections = props => [GamepadConnectionsFX, props];
 const PeerConnectionFX = (dispatch, {
   connection,
   ClientRemove,
+  ClientRemovePlayers,
   ClientAddPlayer,
   ClientSetPlayerInputs,
   ClientPlayerPunch,
   AddConnection,
 }) => {
-  let ids = [];
+  let closed = false;
+
   const onData = (stringData) => {
+    if (closed) return;
+
     const data = JSON.parse(stringData);
     switch (data.type) {
     case 'player.update':
@@ -225,7 +229,6 @@ const PeerConnectionFX = (dispatch, {
       });
 
     case 'player.inputs.update':
-      ids = Array.from(new Set(ids.concat(data.id)));
       return dispatch(ClientSetPlayerInputs, {
         id: data.id,
         inputKey: data.inputKey,
@@ -252,15 +255,24 @@ const PeerConnectionFX = (dispatch, {
     }
   };
 
-  const onClose = () => {
+  const close = () => {
+    if (closed) return;
+    closed = true;
     connection.client.close();
-    dispatch(ClientRemove, { connection });
+    requestAnimationFrame(() => {
+      dispatch(ClientRemove, { id: connection.id });
+      dispatch(ClientRemovePlayers, { connectionId: connection.id });
+    });
+  };
+
+  const onClose = () => {
+    console.warn('Host.connection close', connection);
+    close();
   };
 
   const onError = (error) => {
     console.warn('Host.connection error', connection, error);
-    // connection.client.close();
-    dispatch(ClientRemove, { connection });
+    close();
   };
 
   connection.client.on('data', onData);
@@ -284,7 +296,9 @@ const PeerHandlerFX = (dispatch, {
   const onConnection = (client) => {
     client.on('open', () => {
       requestAnimationFrame(() => {
-        dispatch(ClientAdd, { client })
+        dispatch(ClientAdd, {
+          client,
+        })
         dispatch(ShareLocalPlayers, { connection: { client } });
       });
     });
@@ -292,7 +306,7 @@ const PeerHandlerFX = (dispatch, {
 
   const onDisconnected = () => {
     console.warn('PeerHostFX.disconnected', peer);
-    peer.reconnect();
+    // peer.reconnect();
   };
 
   const onError = (error) => {

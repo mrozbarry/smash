@@ -91,10 +91,12 @@ export const NetworkClientAdd = (state, { client }) => [
   }),
 ];
 
-export const NetworkClientRemove = (state, { connection }) => ({
+export const NetworkClientRemove = (state, { id }) => ({
   ...state,
   network: {
     ...state.network,
-    connections: state.network.connections.filter((c) => c.client !== connection.client),
+    connections: state.network.connections.filter((c) => (
+      c.id !== id
+    )),
   },
 });
