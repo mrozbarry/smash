@@ -24,14 +24,14 @@ export const CharacterSelectionSetName = CharacterSelection.CharacterSelectionSe
 export const CharacterSelectionSetKeybind = CharacterSelection.CharacterSelectionSetKeybind;
 export const CharacterSelectionStart = CharacterSelection.CharacterSelectionStart;
 
-export const PlayerShareLocalsWithConnection = Player.PlayerShareLocalsWithConnection;
+export const PlayerShareLocalsWithClient = Player.PlayerShareLocalsWithClient;
 export const PlayerAdd = Player.PlayerAdd;
 export const PlayerChangeCharacter = Player.PlayerChangeCharacter;
 export const PlayerReady = Player.PlayerReady;
 export const PlayerMerge = Player.PlayerMerge;
 export const PlayerRespawn = Player.PlayerRespawn;
 export const PlayerRemove = Player.PlayerRemove;
-export const PlayerRemoveByConnectionId = Player.PlayerRemoveByConnectionId;
+export const PlayerRemoveByPeerId = Player.PlayerRemoveByPeerId;
 export const PlayerInputChange = Player.PlayerInputChange;
 export const PlayerGetPunched = Player.PlayerGetPunched;
 
@@ -41,10 +41,8 @@ export const GameRender = Game.GameRender;
 export const NetworkInitialize = Network.NetworkInitialize;
 export const NetworkSetPeer = Network.NetworkSetPeer;
 export const NetworkUnsetPeer = Network.NetworkUnsetPeer;
-export const NetworkConnect = Network.NetworkConnect;
+export const NetworkClientConnect = Network.NetworkClientConnect;
 export const NetworkClientAdd = Network.NetworkClientAdd;
 export const NetworkClientRemove = Network.NetworkClientRemove;
 
-
 export const CanvasSetContext = Canvas.CanvasSetContext;
-

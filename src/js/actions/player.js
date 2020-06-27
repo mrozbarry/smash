@@ -1,5 +1,7 @@
 import randomColor from 'randomcolor';
 
+import * as Peer from '../lib/peer';
+
 import * as effects from '../effects';
 import * as physics from '../physics';
 import * as animation from '../animation';
@@ -26,8 +28,8 @@ const _PlayerChange = (id, mutation, state) => {
       ...state,
       players,
     },
-    effects.MessageConnections({
-      connections: state.network.connections,
+    effects.MessageClients({
+      clients: state.network.clients,
       payload: {
         type: 'player.update',
         player,
@@ -36,8 +38,8 @@ const _PlayerChange = (id, mutation, state) => {
   ];
 }
 
-export const PlayerShareLocalsWithConnection = (state, {
-  connection,
+export const PlayerShareLocalsWithClient = (state, {
+  client,
 }) => {
   const localPlayers = Object.keys(state.controls)
     .map((id) => state.players[id]);
@@ -45,8 +47,8 @@ export const PlayerShareLocalsWithConnection = (state, {
   return [
     state,
     localPlayers.map((player) => (
-      effects.MessageConnections({
-        connections: [connection],
+      effects.MessageClients({
+        clients: [client],
         payload: {
           type: 'player.update',
           player,
@@ -78,7 +80,7 @@ export const PlayerAdd = (state, {
 
   const player = {
     id,
-    connectionId: state.network.id,
+    peerId: Peer.simplifyId(state.network.peer.id),
     ready: false,
     dead: true,
     name,
@@ -135,12 +137,11 @@ export const PlayerReady = (state, { id, ready }) => {
   }), state);
 };
 
-export const PlayerMerge = (state, { player, connectionId }) => {
+export const PlayerMerge = (state, { player, peerId }) => {
   const players = {
     ...state.players,
     [player.id]: {
       ...player,
-      connectionId,
     },
   };
 
@@ -150,13 +151,13 @@ export const PlayerMerge = (state, { player, connectionId }) => {
   };
 };
 
-export const PlayerRemoveByConnectionId = (state, { connectionId }) => ({
+export const PlayerRemoveByPeerId = (state, { peerId }) => ({
   ...state,
   players: Object.keys(state.players).reduce((players, id) => ({
     ...players,
-    ...(state.players[id].connectionId === connectionId
+    ...(state.players[id].peerId === peerId
       ? {}
-      : state.players[id]
+      : { [id]: state.players[id] }
     ),
   }), {}),
 });
@@ -179,8 +180,8 @@ export const PlayerRespawn = (state, { id }) => {
         [id]: player,
       },
     },
-    effects.MessageConnections({
-      connections: state.network.connections,
+    effects.MessageClients({
+      clients: state.network.clients,
       payload: {
         type: 'player.update',
         player,
@@ -189,10 +190,19 @@ export const PlayerRespawn = (state, { id }) => {
   ];
 };
 
-export const PlayerRemove = (state, { id }) => ({
-  ...state,
-  players: omit(id, state.players),
-});
+export const PlayerRemove = (state, { id }) => [
+  {
+    ...state,
+    players: omit(id, state.players),
+  },
+  effects.MessageClients({
+    clients: state.network.clients,
+    payload: {
+      type: 'player.remove',
+      playerId: id,
+    },
+  }),
+];
 
 export const PlayerInputChange = (state, {
   id,
@@ -233,8 +243,8 @@ export const PlayerInputChange = (state, {
   if (didPunch) {
     punchEffects = [
       effects.Punch({ sourceId: id, targetIds: localTargetIds, OnPunch: PlayerGetPunched }),
-      effects.MessageConnections({
-        connections: state.network.connections,
+      effects.MessageClients({
+        clients: state.network.clients,
         payload: {
           type: 'player.punch',
           sourceId: id,
@@ -267,8 +277,8 @@ export const PlayerInputChange = (state, {
     [
       punchEffects,
       isLocal && [
-        effects.MessageConnections({
-          connections: state.network.connections,
+        effects.MessageClients({
+          clients: state.network.clients,
           payload: {
             type: 'player.inputs.update',
             id,
@@ -276,8 +286,8 @@ export const PlayerInputChange = (state, {
             value,
           },
         }),
-        effects.MessageConnections({
-          connections: state.network.connections,
+        effects.MessageClients({
+          clients: state.network.clients,
           payload: {
             type: 'player.update',
             player,
@@ -317,8 +327,8 @@ export const PlayerGetPunched = (state, { id, sourceId }) => {
         [id]: hitPlayer,
       },
     },
-    effects.MessageConnections({
-      connections: state.network.connections,
+    effects.MessageClients({
+      clients: state.network.clients,
       payload: {
         type: 'player.update',
         player: hitPlayer,

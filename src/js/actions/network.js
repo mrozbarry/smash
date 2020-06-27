@@ -6,7 +6,7 @@ export const state = {
   network: {
     id: null,
     peer: null,
-    connections: [],
+    clients: [],
   },
 };
 
@@ -22,7 +22,7 @@ export const NetworkInitialize = (state, {
         ...state.network,
         id,
         peer: null,
-        connections: [],
+        clients: [],
       },
     },
     effects.NetworkCreatePeer({
@@ -40,31 +40,35 @@ export const NetworkSetPeer = (state, { peer, joinGameId }) => [
       ...state.network,
       peer,
     },
-    view: 'characterSelect',
+    view: 'characterSelect', // TODO: Move to some other spot
   },
   effects.NetworkConnectPeer({
     peer,
     joinGameId,
-    OnAddConnection: NetworkClientAdd,
+    NetworkClientAdd,
   }),
 ];
 
-export const NetworkUnsetPeer = (state) => ({
-  ...state,
-  network: {
-    ...state.network,
-    peer: null,
-    dataConnection: null,
+export const NetworkUnsetPeer = (state) => [
+  {
+    ...state,
+    network: {
+      ...state.network,
+      peer: null,
+    },
   },
-});
+  effects.NetworkDestroyPeer({
+    peer: state.network.peer,
+  }),
+];
 
-export const NetworkConnect = (state, { id }) => [
+export const NetworkClientConnect = (state, { id }) => [
   state,
-  state.network.connections.every((c) => c.id !== id) && (
+  state.network.clients.some(client => client.peer === id) && (
     effects.NetworkConnectPeer({
       peer: state.network.peer,
-      joinGameId: id,
-      OnAddConnection: NetworkClientAdd,
+      joinGameId: Peer.simplifyId(id),
+      NetworkClientAdd,
     })
   ),
 ];
@@ -74,29 +78,35 @@ export const NetworkClientAdd = (state, { client }) => [
     ...state,
     network: {
       ...state.network,
-      connections: state.network.connections.concat({
-        id: Peer.simplifyId(client.peer),
-        client,
-      }),
+      clients: state.network.clients.concat(client),
     },
   },
-  effects.MessageConnections({
-    connections: [
-      { client },
-    ],
-    payload: {
-      type: 'peers.index',
-      ids: state.network.connections.map(c => Peer.simplifyId(c.client.peer)),
-    },
-  }),
+  state.network.clients.length > 0 && [
+    effects.MessageClients({
+      clients: [client],
+      payload: {
+        type: 'peers.index',
+        ids: state.network.clients.map((c) => c.peer),
+      },
+    }),
+  ],
 ];
 
-export const NetworkClientRemove = (state, { id }) => ({
-  ...state,
-  network: {
-    ...state.network,
-    connections: state.network.connections.filter((c) => (
-      c.id !== id
-    )),
+export const NetworkClientRemove = (state, { id }) => [
+  {
+    ...state,
+    network: {
+      ...state.network,
+      clients: state.network.clients.filter((c) => (
+        Peer.simplifyId(c.peer) !== id
+      )),
+    },
   },
-});
+  state.network.clients
+    .filter((client) => (
+      Peer.simplifyId(client.peer) === id
+    ))
+    .map((client) => (
+      effects.NetworkCloseDataConnection({ client })
+    )),
+];

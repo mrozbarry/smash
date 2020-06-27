@@ -43,8 +43,8 @@ export const GameStart = (state, {
         OnRespawn,
       }),
       ...localIds.map((id) => (
-        effects.MessageConnections({
-          connections: state.network.connections,
+        effects.MessageClients({
+          clients: state.network.clients,
           payload: {
             type: 'player.update',
             player: players[id],

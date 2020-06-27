@@ -127,7 +127,7 @@ const Player = ({ isLocal, characters, ...props }) => {
     h('div', { style: { flexGrow: 1 } }),
     isLocal && h('button', {
       onclick: [
-        actions.ConnectionRemove,
+        actions.PlayerRemove,
         { id : props.id },
       ],
     }, 'Remove'),
@@ -180,7 +180,7 @@ export const characterSelect = ({ state, characters }) => {
         overflowY: 'auto',
       },
     }, [
-      Object.values(state.players).map((player) => h(
+      Object.values(state.players).filter(Boolean).map((player) => h(
         Player,
         {
           ...player,

@@ -1,5 +1,6 @@
 import * as declarativas from 'declarativas';
-import * as canvas from './canvas'; import * as Peer from './lib/peer';
+import * as canvas from './canvas';
+import * as Peer from './lib/peer';
 
 
 const DeclarativasFX = (dispatch, {
@@ -19,7 +20,6 @@ const DeclarativasFX = (dispatch, {
   });
 };
 export const Declarativas = props => [DeclarativasFX, props];
-
 
 const LoadSpriteSheetFx = (dispatch, {
   character,
@@ -119,7 +119,7 @@ export const NetworkCreatePeer = props => [NetworkCreatePeerFX, props];
 const NetworkConnectPeerFX = (dispatch, {
   peer,
   joinGameId,
-  OnAddConnection,
+  NetworkClientAdd,
 }) => {
   if (!joinGameId) return;
 
@@ -130,7 +130,7 @@ const NetworkConnectPeerFX = (dispatch, {
     },
   );
   const onOpen = () => {
-    dispatch(OnAddConnection, { client });
+    dispatch(NetworkClientAdd, { client });
     client.off('open', onOpen);
   };
   client.on('open', onOpen);
@@ -138,18 +138,41 @@ const NetworkConnectPeerFX = (dispatch, {
 export const NetworkConnectPeer = props => [NetworkConnectPeerFX, props];
 
 
-const MessageConnectionsFX = (_dispatch, {
-  connections,
+const NetworkDestroyPeerFX = (_dispatch, {
+  peer,
+}) => {
+  peer.destroy();
+};
+export const NetworkDestroyPeer = props => [NetworkDestroyPeerFX, props];
+
+
+const NetworkCloseDataConnectionFX = (_dispatch, {
+  client,
+}) => {
+  if (client.open) client.close();
+};
+export const NetworkCloseDataConnection = props => [NetworkCloseDataConnectionFX, props];
+
+
+const MessageClientsFX = (_dispatch, {
+  clients,
   payload,
 }) => {
   const data = JSON.stringify(payload);
-  requestAnimationFrame(() => {
-    for(const connection of connections) {
-      connection.client.send(data);
-    }
+  console.log('MessageClientsFX', {
+    clients,
+    payload,
+    data,
   });
+  for(const client of clients) {
+    if (!client.open) {
+      console.log('Skipping client because not open', client);
+      continue;
+    }
+    client.send(data);
+  }
 };
-export const MessageConnections = props => [MessageConnectionsFX, props];
+export const MessageClients = props => [MessageClientsFX, props];
 
 const RespawnPlayerFX = (dispatch, {
   id,

@@ -21,8 +21,7 @@ const viewScene = (state) => {
     return h(characterSelectView, {
       state,
       characters: {
-        woodcutter: assetWoodCutter.Woodcutter,
-        graverobber: assetGraveRobber.GraveRobber,
+        woodcutter: assetWoodCutter.Woodcutter, graverobber: assetGraveRobber.GraveRobber,
         steamman: assetSteamMan.SteamMan,
       },
     });
@@ -69,21 +68,6 @@ app({
 
   view: (state) => h('div', {}, [
     h(viewScene, state),
-    state.network.peer && [
-      h('hr'),
-      h('div', {}, 'Connections:'),
-      h('ul', {}, [
-        state.network.connections.map((connection) => h('li', {
-          style: {
-            borderBottom: '1px black solid',
-            marginBottom: '0.5rem',
-            paddingBottom: '0.5rem',
-          },
-        }, [
-          h('div', {}, `ID: ${connection.client.peer}`),
-        ])),
-      ]),
-    ],
   ]),
 
   subscriptions: (state) => {
@@ -91,24 +75,10 @@ app({
 
     return [
       state.network.peer && [
-        subscriptions.PeerHandler({
+        subscriptions.PeerJSHandler({
           peer: state.network.peer,
-          ClientAdd: actions.NetworkClientAdd,
-          ShareLocalPlayers: actions.PlayerShareLocalsWithConnection,
-          OnDone: actions.NetworkUnsetPeer,
+          actions,
         }),
-
-        ...state.network.connections.map((connection) => (
-          subscriptions.PeerConnection({
-            connection,
-            ClientRemove: actions.NetworkClientRemove,
-            ClientRemovePlayers: actions.PlayerRemoveByConnectionId,
-            ClientAddPlayer: actions.PlayerMerge,
-            ClientSetPlayerInputs: actions.PlayerInputChange,
-            ClientPlayerPunch: actions.PlayerGetPunched,
-            AddConnection: actions.NetworkConnect,
-          })
-        )),
       ],
 
       state.view === 'game' && [
@@ -142,6 +112,13 @@ app({
           OnGamepadsChange: actions.GamepadsUpdate,
         }),
       ],
+
+      state.network.clients.map((client) => (
+        subscriptions.DataConnectionHandler({
+          client,
+          actions,
+        })
+      )),
     ];
   },
 
