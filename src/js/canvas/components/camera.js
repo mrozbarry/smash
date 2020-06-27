@@ -1,29 +1,19 @@
 import { c } from 'declarativas';
 import { revertableState } from './revertableState';
 
-let debugMemoValue = '';
-const debugMemo = (value) => {
-  const valueStr = JSON.stringify(value);
-  if (valueStr === debugMemoValue) {
-    return;
-  }
-  debugMemoValue = valueStr;
-  console.log(value);
-};
-
 const min = (prev, value) => typeof prev !== 'number' ? value : Math.min(prev, value);
 const max = (prev, value) => typeof prev !== 'number' ? value : Math.max(prev, value);
 
 export const camera = (props, children) => {
   const boundaries = props.targets.reduce((boundaries, target) => ({
-    top: min(boundaries.top, target.y),
-    right: max(boundaries.right, target.x),
-    bottom: max(boundaries.bottom, target.y),
-    left: min(boundaries.left, target.x),
+    top: min(boundaries.top, target.y - props.playerPadding),
+    right: max(boundaries.right, target.x + props.playerPadding),
+    bottom: max(boundaries.bottom, target.y + props.playerPadding),
+    left: min(boundaries.left, target.x - props.playerPadding),
   }), { top: null, right: null, bottom: null, left: null });
 
-  const width = boundaries.right - boundaries.left + (props.playerPadding * 2);
-  const height = boundaries.bottom - boundaries.top + (props.playerPadding * 2);
+  const width = boundaries.right - boundaries.left;
+  const height = boundaries.bottom - boundaries.top;
 
   const size = {
     width: props.canvas.width,
@@ -43,13 +33,6 @@ export const camera = (props, children) => {
     x: ((boundaries.left + boundaries.right) / 2),
     y: ((boundaries.top + boundaries.bottom) / 2),
   };
-
-  debugMemo({
-    targets: props.targets,
-    boundaries,
-    size,
-    position,
-  });
 
   return c(revertableState, {}, [
     c('translate', {
