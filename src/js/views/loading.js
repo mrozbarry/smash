@@ -29,7 +29,43 @@ export const loading = (state) => {
         h('h2', {}, 'Loading...'),
         h('progress', { max: items.length, value: done }),
       ]
-      : h('button', { onclick: actions.StartCharacterSelect }, 'Local Play'),
+      : h('div', {
+        style: {
+          display: 'flex',
+          flexDirection: 'column',
+          width: '25%',
+        },
+      }, [
+        h('button', { onclick: actions.CharacterSelectionStart }, 'Local Game'),
+        h('button', { onclick: [actions.NetworkInitialize, {} ] }, 'Host Game'),
+        h('form', {
+          onsubmit: [
+            actions.NetworkInitialize,
+            (event) => {
+              event.preventDefault();
+              const formData = new FormData(event.target);
+              const joinGameId = formData.get('joinGameId');
+              return {
+                joinGameId,
+              };
+            },
+          ],
+          style: {
+            display: 'flex',
+          },
+        }, [
+          h('input', {
+            type: 'search',
+            name: 'joinGameId',
+            style: { flexGrow: 1 },
+            placeholder: 'Join Game Code',
+            required: true,
+            minLength: 4,
+            pattern: '[A-Za-z0-9]{4,}',
+          }),
+          h('button', { type: 'submit' }, 'Join'),
+        ]),
+      ]),
 
     h('hr', { style: { width: '50%', margin: '3rem 0' } }),
 

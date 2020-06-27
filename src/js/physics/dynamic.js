@@ -2,19 +2,24 @@ import * as vec from './vector2d';
 import * as rect from './rect';
 import * as aabb from './aabb';
 
-export const make = (position, size) => ({
-  position,
+export const make = (size) => ({
+  position: vec.zero,
   aabb: aabb.make(
     vec.zero,
     vec.zero,
   ),
   speed: vec.zero,
   force: vec.zero,
+  isLocked: false,
   isOnGround: false,
   isJumping: false,
+  isAttacking: false,
+  isFacingRight: true,
   size,
-  walkSpeed: 0.8,
-  jumpSpeed: -9,
+  walkSpeed: 0.4,
+  runSpeed: 0.8,
+  jumpSpeed: -10,
+  runJumpMultiplier: 0.9,
   punch: vec.make(
     10,
     -10,
@@ -23,30 +28,53 @@ export const make = (position, size) => ({
 
 export const reset = (world, object) => {
   const geo = world.geometry[Math.floor(Math.random() * world.geometry.length)];
+  const x = geo.x + (geo.width / 2);
   return {
     ...object,
+    isFacingRight: (Math.random() * 10) > 5,
     isOnGround: false,
     isJumping: false,
+    isLocked: false,
     position: vec.make(
-      geo.x + (geo.width / 2),
+      x,
       100,
     ),
     speed: vec.zero,
   };
 };
 
+export const lock = (isLocked, object) => ({
+  ...object,
+  isLocked,
+});
+
+export const attack = (shouldLock, isAttacking, object) => lock(
+  isAttacking && shouldLock,
+  {
+    ...object,
+    isAttacking,
+  },
+);
+
 export const applyInputs = (inputs, object) => {
   const isJumping = object.isOnGround && inputs.jump > 0;
+  const isRunning = inputs.run > 0.5;
+
+  const jumpModifier = isRunning ? object.runJumpMultiplier : 1;
 
   return {
     ...object,
     isJumping,
+    isRunning,
+    isFacingRight: inputs.horizontal !== 0
+      ? inputs.horizontal > 0
+      : object.isFacingRight,
     speed: vec.add(
       vec.multiply(
-        (inputs.punch === 0 ? 1 : 0),
+        (object.isLocked ? 0 : 1),
         vec.make(
-          object.walkSpeed * inputs.horizontal,
-          isJumping && !object.isJumping ? object.jumpSpeed : 0,
+          (isRunning ? object.runSpeed : object.walkSpeed) * inputs.horizontal,
+          isJumping && !object.isJumping ? (object.jumpSpeed * jumpModifier) : 0,
         ),
       ),
       object.speed,
@@ -54,7 +82,7 @@ export const applyInputs = (inputs, object) => {
   };
 };
 
-export const step = (world, ground, isFacingRight, object) => {
+export const step = (world, ground, object) => {
   const speed = vec.add(
     object.speed,
     vec.multiply(
@@ -96,7 +124,7 @@ export const step = (world, ground, isFacingRight, object) => {
 
   const boundingBox = rect.make(
     vec.make(
-      object.position.x - (object.size.x / 2) - (isFacingRight ? 0 : (object.size.x / 4)),
+      object.position.x - (object.size.x / 2) - (object.isFacingRight ? 0 : (object.size.x / 4)),
       object.position.y - (object.size.y / 1.15),
     ),
     vec.make(
