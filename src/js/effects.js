@@ -159,14 +159,8 @@ const MessageClientsFX = (_dispatch, {
   payload,
 }) => {
   const data = JSON.stringify(payload);
-  console.log('MessageClientsFX', {
-    clients,
-    payload,
-    data,
-  });
   for(const client of clients) {
     if (!client.open) {
-      console.log('Skipping client because not open', client);
       continue;
     }
     client.send(data);

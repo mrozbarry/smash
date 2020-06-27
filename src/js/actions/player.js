@@ -46,15 +46,13 @@ export const PlayerShareLocalsWithClient = (state, {
 
   return [
     state,
-    localPlayers.map((player) => (
-      effects.MessageClients({
-        clients: [client],
-        payload: {
-          type: 'player.update',
-          player,
-        },
-      })
-    )),
+    effects.MessageClients({
+      clients: [client],
+      payload: {
+        type: 'players.update',
+        players: localPlayers,
+      },
+    }),
   ];
 };
 

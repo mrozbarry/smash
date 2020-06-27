@@ -3,12 +3,7 @@ const PeerJSHandlerFX = (dispatch, {
   actions,
 }) => {
   const onConnection = (client) => {
-    console.log('New client connection', client);
     const onOpen = () => {
-      console.log('onConnection.onOpen', {
-        client,
-      });
-
       dispatch(
         actions.NetworkClientAdd,
         { client },
@@ -36,7 +31,6 @@ const PeerJSHandlerFX = (dispatch, {
   peer.on('error', onError);
 
   return () => {
-    console.log('PeerHostFX.cancel', peer);
     peer.off('connection', onConnection);
     peer.off('disconnected', onDisconnected);
     peer.off('error', onError);

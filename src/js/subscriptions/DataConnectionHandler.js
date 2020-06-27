@@ -8,15 +8,17 @@ const DataConnectionHandlerFX = (dispatch, {
 
   const onData = (stringData) => {
     const data = JSON.parse(stringData);
-    console.log('onData', {
-      data,
-      stringData,
-    });
     switch (data.type) {
     case 'player.update':
       return dispatch(actions.PlayerMerge, {
         player: data.player,
       });
+
+    case 'players.update':
+      return data.players.forEach((player) => dispatch(
+        actions.PlayerMerge,
+        { player },
+      ));
 
     case 'player.inputs.update':
       return dispatch(actions.PlayerInputChange, {
@@ -41,7 +43,7 @@ const DataConnectionHandlerFX = (dispatch, {
       return;
 
     default:
-      console.log('Unknown type', data.type);
+      console.warn('Unknown type', data.type);
     }
   };
 
@@ -52,12 +54,10 @@ const DataConnectionHandlerFX = (dispatch, {
   };
 
   const onClose = () => {
-    console.warn('Peer.connection close', client);
     close();
   };
 
   const onError = (error) => {
-    console.warn('Peer.connection error', client, error);
     close();
   };
 
@@ -66,7 +66,6 @@ const DataConnectionHandlerFX = (dispatch, {
   client.on('error', onError);
 
   return () => {
-    console.log('DataConnectionHandler.cancel', client);
     client.off('data', onData);
     client.off('close', onClose);
     client.off('error', onError);

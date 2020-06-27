@@ -202,6 +202,15 @@ export const GameRender = (state, {
         id,
         PlayerReset: OnRespawn,
       })),
+      effects.MessageClients({
+        clients: state.network.clients,
+        payload: {
+          type: 'players.update',
+          players: Object
+            .keys(state.controls)
+            .map((id) => players[id]),
+        },
+      }),
     ],
   ]
 };

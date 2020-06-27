@@ -21,13 +21,8 @@ export const camera = (props, children) => {
   };
 
   const ratio = props.canvas.height / props.canvas.width;
-  if (width >= height) {
-    size.width = Math.max(props.canvas.width / 1.5, width);
-    size.height = size.width * ratio;
-  } else {
-    size.height = Math.max(props.canvas.height / 1.5, height);
-    size.width = size.height / ratio;
-  }
+  size.width = Math.max(props.canvas.width / 1.5, width);
+  size.height = size.width * ratio;
 
   const position = {
     x: ((boundaries.left + boundaries.right) / 2),
